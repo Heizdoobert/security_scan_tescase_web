@@ -113,3 +113,90 @@ def test_secops_does_not_call_web_tests(mock_run, mock_run_secops):
         main()
     mock_run_secops.assert_called_once()
     mock_run.assert_not_called()
+
+
+def test_parse_args_check():
+    """--check should be None when not provided, string when provided."""
+    args = parse_args(["--target", "http://test.local"])
+    assert args.check is None
+    args = parse_args(["--target", "http://test.local", "--check", "headers/check_strict_transport_security"])
+    assert args.check == "headers/check_strict_transport_security"
+
+
+@mock.patch("websec_test.main.run")
+def test_parse_args_check_with_module_and_auth(mock_run):
+    """--check should parse correctly with --auth."""
+    with mock.patch("sys.argv", [
+        "websec_test.main", "--target", "http://test.local",
+        "--auth", "admin:pass", "--check", "auth/blank_password_login",
+    ]):
+        main()
+    mock_run.assert_called_once()
+    args = mock_run.call_args[0][0]
+    assert args.check == "auth/blank_password_login"
+    assert args.auth == "admin:pass"
+
+
+# ── Discover mode tests ──────────────────────────────────────────────
+
+def test_parse_args_discover_defaults_false():
+    """--discover should default to False when not provided."""
+    args = parse_args(["--target", "http://test.local"])
+    assert args.discover is False
+
+
+def test_parse_args_discover_true_when_passed():
+    """--discover should be True when passed."""
+    args = parse_args(["--target", "http://test.local", "--discover"])
+    assert args.discover is True
+
+
+def test_parse_args_discover_with_modules():
+    """--discover should work with --modules."""
+    args = parse_args(["--target", "http://test.local", "--discover",
+                       "--modules", "headers", "cors"])
+    assert args.discover is True
+    assert args.modules == ["headers", "cors"]
+
+
+@mock.patch("requests.get")
+def test_run_discover_integration(mock_get):
+    """run() with --discover should call run_discover and exit 0."""
+    mock_get.return_value.status_code = 200
+
+    from websec_test.main import run, parse_args
+    args = parse_args(["--target", "http://test.local",
+                       "--discover", "--modules", "headers"])
+    with mock.patch("sys.argv", ["websec_test.main"]):
+        with pytest.raises(SystemExit) as exc:
+            run(args)
+    assert exc.value.code == 0
+
+
+@mock.patch("requests.get")
+def test_run_discover_skips_test_execution(mock_get):
+    """run() with --discover should NOT run any tests (blackboard should be empty)."""
+    mock_get.return_value.status_code = 200
+
+    from websec_test.main import run, parse_args
+    args = parse_args(["--target", "http://test.local",
+                       "--discover", "--modules", "headers"])
+    with mock.patch("sys.argv", ["websec_test.main"]):
+        with pytest.raises(SystemExit) as exc:
+            run(args)
+    assert exc.value.code == 0
+
+
+@mock.patch("requests.get")
+def test_run_discover_with_auth(mock_get):
+    """--discover should work with --auth (auth module needs credentials)."""
+    mock_get.return_value.status_code = 200
+
+    from websec_test.main import run, parse_args
+    args = parse_args(["--target", "http://test.local",
+                       "--auth", "admin:pass",
+                       "--discover", "--modules", "auth"])
+    with mock.patch("sys.argv", ["websec_test.main"]):
+        with pytest.raises(SystemExit) as exc:
+            run(args)
+    assert exc.value.code == 0

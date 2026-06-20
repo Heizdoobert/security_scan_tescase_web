@@ -7,24 +7,25 @@ from websec_test.client.session import SessionClient
 from websec_test.results.collector import ResultCollector
 from websec_test.results.models import TestStatus
 from websec_test.results.reporter import Reporter
-from websec_test.engine import Sequence, ModuleAdapter, CheckTreeBuilder, CheckSpec, Blackboard
+from websec_test.engine import Sequence, ModuleAdapter, CheckTreeBuilder, CheckSpec, Blackboard, DiscoverAction, CheckAdapter
 
 # Module registry — maps name to a factory callable(credentials, target) returning an instance
 from websec_test.modules.headers import HeadersModule, headers_check_specs
 from websec_test.modules.auth import AuthModule, auth_check_specs
-from websec_test.modules.csrf import CSRFModule
-from websec_test.modules.injection import InjectionModule
-from websec_test.modules.authz import AuthorizationModule
-from websec_test.modules.ssl_tls import SslTlsModule
+from websec_test.modules.csrf import CSRFModule, csrf_check_specs
+from websec_test.modules.injection import InjectionModule, injection_check_specs
+from websec_test.modules.authz import AuthorizationModule, authz_check_specs
+from websec_test.modules.ssl_tls import SslTlsModule, ssl_tls_check_specs
 from websec_test.modules.cors import CorsModule, cors_check_specs
-from websec_test.modules.cookies import CookiesModule
-from websec_test.modules.disclosure import DisclosureModule
-from websec_test.modules.methods import MethodsModule
+from websec_test.modules.cookies import CookiesModule, cookies_check_specs
+from websec_test.modules.disclosure import DisclosureModule, disclosure_check_specs
+from websec_test.modules.methods import MethodsModule, methods_check_specs
 
 ALL_MODULES = ["headers", "auth", "csrf", "injection", "authz",
                 "ssl_tls", "cors", "cookies", "disclosure", "methods"]
 
-CHECK_LEVEL_MODULES = {"headers", "auth", "cors"}
+CHECK_LEVEL_MODULES = {"headers", "auth", "csrf", "injection", "authz",
+                       "ssl_tls", "cors", "cookies", "disclosure", "methods"}
 
 MODULE_FACTORIES: dict[str, type] = {
     "headers": HeadersModule,
@@ -40,7 +41,14 @@ MODULE_FACTORIES: dict[str, type] = {
 CHECK_SPEC_REGISTRY: dict[str, list[CheckSpec]] = {
     "headers": headers_check_specs(),
     "auth": auth_check_specs(),
+    "csrf": csrf_check_specs(),
+    "injection": injection_check_specs(),
+    "authz": authz_check_specs(),
+    "ssl_tls": ssl_tls_check_specs(),
     "cors": cors_check_specs(),
+    "cookies": cookies_check_specs(),
+    "disclosure": disclosure_check_specs(),
+    "methods": methods_check_specs(),
 }
 
 
@@ -58,7 +66,11 @@ def parse_args(argv=None):
     parser.add_argument("--log", nargs="?", const="log.txt", default=None,
                         help="Path to write plain-text log (default: log.txt)")
     parser.add_argument("--check-level", action="store_true",
-                        help="Use per-check Behavior Tree nodes (opt-in modules: headers, auth, cors)")
+                        help="Use per-check Behavior Tree nodes for all modules")
+    parser.add_argument("--check", help="Run a single check (format: module/check_name, "
+                        "e.g. headers/check_strict_transport_security)")
+    parser.add_argument("--discover", action="store_true",
+                        help="Run discovery only — show endpoints and checks without testing")
     parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
     parser.add_argument("--secops", nargs="?", const=".", default=None,
                         help="Run SAST/dependency/compliance scan on a project directory")
@@ -66,6 +78,52 @@ def parse_args(argv=None):
     if args.all:
         args.modules = ALL_MODULES
     return args
+
+
+def run_discover(client, target, module_map):
+    """Discover-mode: run discovery only, print endpoints and checks, no test execution."""
+    total_checks = 0
+    total_endpoints = 0
+    module_count = len(module_map)
+    severity_labels = {
+        2: "HIGH", 1: "MEDIUM", 0: "LOW",
+    }
+
+    print(f"\n  {'='*56}")
+    print(f"  Discover mode for target: {target}")
+    print(f"  {'='*56}\n")
+
+    for name, mod in module_map.items():
+        eps = mod.discover(client, target)
+        if not eps:
+            print(f"  Module: {name}")
+            print(f"    [No endpoints discovered]\n")
+            continue
+
+        total_endpoints += len(eps)
+
+        # Get known checks for this module
+        spec_list = CHECK_SPEC_REGISTRY.get(name, [])
+        total_checks += len(spec_list)
+
+        print(f"  Module: {name}")
+        print(f"    Discovered endpoints ({len(eps)}):")
+        for ep in eps:
+            print(f"      {ep.method or 'GET'} {ep.url}")
+        if spec_list:
+            print(f"    Checks ({len(spec_list)}):")
+            for spec in spec_list:
+                sev = severity_labels.get(spec.severity, str(spec.severity))
+                print(f"      {spec.name} ({sev})")
+        else:
+            print(f"    Runs {name}/test() — no per-check breakdown available")
+        print()
+
+    print(f"  {'─'*56}")
+    print(f"  Discover mode complete: {module_count} modules, "
+          f"{total_checks} checks across {total_endpoints} endpoints")
+    print(f"  {'='*56}")
+    print("  Use --all or --modules <names> to run tests against these endpoints.\n")
 
 
 def run(args):
@@ -105,26 +163,54 @@ def run(args):
     # Build and execute Behavior Tree
     blackboard = Blackboard(client=client, target=target)
 
-    if args.check_level:
+    if args.discover:
+        run_discover(client, target, module_map)
+        sys.exit(0)
+
+    if args.check:
+        # ── Single-check mode: module/check_name ─────────────────────
+        if "/" not in args.check:
+            print("[!] --check must be in format: module/check_name "
+                  "(e.g. headers/check_strict_transport_security)")
+            sys.exit(1)
+        module_name, check_name = args.check.split("/", 1)
+        if module_name not in MODULE_FACTORIES:
+            print(f"[!] Unknown module: {module_name}")
+            sys.exit(1)
+        if module_name not in CHECK_SPEC_REGISTRY:
+            print(f"[!] Module '{module_name}' does not support per-check execution")
+            sys.exit(1)
+        specs = CHECK_SPEC_REGISTRY[module_name]
+        matching = [s for s in specs if s.name == check_name]
+        if not matching:
+            available = ", ".join(s.name for s in specs)
+            print(f"[!] Unknown check '{check_name}' in module '{module_name}'. "
+                  f"Available: {available}")
+            sys.exit(1)
+        spec = matching[0]
+
+        # Instantiate module
+        if module_name == "auth":
+            mod = AuthModule(credentials=args.auth, target=target)
+        else:
+            mod = MODULE_FACTORIES[module_name]()
+
+        dis_fn = lambda c, t, _mod=mod: _mod.discover(c, t)
+        tree = Sequence(module_name, children=[
+            DiscoverAction(f"{module_name}_discover", dis_fn),
+            CheckAdapter(spec.name, spec.fn, module_name),
+        ])
+        tree.tick(blackboard)
+        print(f"[*] Running single check: {args.check}")
+
+    elif args.check_level:
         children = []
         for name in module_map:
-            if name == "headers":
+            if name in CHECK_SPEC_REGISTRY:
                 children.append(CheckTreeBuilder.build_module(
-                    "headers",
-                    lambda c, t: HeadersModule().discover(c, t),
-                    headers_check_specs()
-                ))
-            elif name == "auth":
-                children.append(CheckTreeBuilder.build_module(
-                    "auth",
-                    lambda c, t, _auth=args.auth, _target=target: AuthModule(credentials=_auth, target=_target).discover(c, t),
-                    auth_check_specs()
-                ))
-            elif name == "cors":
-                children.append(CheckTreeBuilder.build_module(
-                    "cors",
-                    lambda c, t: CorsModule().discover(c, t),
-                    cors_check_specs()
+                    name,
+                    module_map[name].discover,
+                    CHECK_SPEC_REGISTRY[name],
                 ))
             else:
                 children.append(ModuleAdapter(name, module_map[name]))

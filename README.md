@@ -42,6 +42,12 @@ Results appear in the terminal with color-coded pass/fail/warn/error. Structured
 ### Web Security Scan
 
 ```bash
+# Discover mode — show endpoints and checks without running tests
+python -m websec_test.main --target http://localhost:8080/ --discover
+
+# With specific modules
+python -m websec_test.main --target http://localhost:8080/ --discover --modules headers cors
+
 # Basic scan against your target
 python -m websec_test.main --target http://localhost:8080/ --all
 
@@ -94,8 +100,10 @@ python -m websec_test.mongodb_check --uri mongodb://localhost:27017 --json
 | `--output` | `./reports` | Directory for JSON reports |
 | `--timeout` | `10` | Per-request timeout in seconds |
 | `--log` | none | Path to write plain-text log |
-| `--check-level` | false | Use per-check Behavior Tree nodes (opt-in: headers, auth, cors) |
+| `--check-level` | false | Use per-check Behavior Tree nodes for all 10 modules |
+| `--check` | none | Run a single check (format: `module/check_name`, e.g. `headers/check_strict_transport_security`) |
 | `--verbose`, `-v` | false | Increase output verbosity |
+| `--discover` | false | Run discovery only — show endpoints and checks without testing |
 | `--secops` | none | Run SAST/dependency/compliance scan on a project directory (defaults to `.`) |
 
 Exit code is **1** if any test fails or errors, **0** otherwise — ready for CI pipelines.
@@ -282,7 +290,7 @@ pip install --upgrade -r requirements.txt
 pytest tests/ -v
 ```
 
-244 tests covering all 10 modules, the session client, collector, reporter, CLI parser, SAST scanner, dependency assessor, compliance checker, MongoDB check, integration tests, the behavior tree engine, per-check behavior tree nodes, the check registry, and the BT builder. All HTTP tests mock via the `responses` library — no real network needed.
+252 tests covering all 10 modules, the session client, collector, reporter, CLI parser, SAST scanner, dependency assessor, compliance checker, MongoDB check, per-check mode (`--check`), discover mode (`--discover`), the behavior tree engine, and the BT builder. All HTTP tests mock via the `responses` library — no real network needed.
 
 ### Add Tests for a New Module
 
