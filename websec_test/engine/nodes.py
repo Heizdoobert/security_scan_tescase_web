@@ -51,6 +51,16 @@ class Selector(Node):
         return NodeStatus.FAILURE
 
 class Parallel(Node):
+    """Run children sequentially, requiring a minimum number of successes.
+
+    Note: Children are executed SEQUENTIALLY in the current implementation,
+    not concurrently. The name reflects *semantic* parallelism — independent
+    checks that don't depend on each other's results.
+
+    ``min_success`` is the count of successful children required for the
+    overall node to return SUCCESS. If fewer children succeed, returns FAILURE.
+    """
+
     def __init__(self, name, children=None, min_success=1):
         super().__init__(name)
         self.children = children or []

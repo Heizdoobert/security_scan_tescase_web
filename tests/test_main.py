@@ -38,6 +38,14 @@ def test_parse_args_all_options():
     assert args.timeout == 30
 
 
+def test_parse_args_check_level():
+    """--check-level should default to False, True when passed."""
+    args = parse_args(["--target", "http://test.local"])
+    assert args.check_level is False
+    args = parse_args(["--target", "http://test.local", "--check-level"])
+    assert args.check_level is True
+
+
 def test_parse_args_all_modules():
     args = parse_args(["--target", "http://test.local", "--all"])
     expected = ["headers", "auth", "csrf", "injection", "authz",

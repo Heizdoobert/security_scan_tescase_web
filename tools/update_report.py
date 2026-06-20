@@ -13,7 +13,7 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn, nsdecls
 from docx.oxml import parse_xml
 
-DOCX_PATH = r"D:\testcase_web\Bao_Cao_Thuc_Tap_WebSec_Test_Behavior_Tree.docx"
+DOCX_PATH = r"D:\testcase_web\Bao_Cao_Thuc_Tap_WebSec_Test_Behavior_Tree_UPDATED.docx"
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 

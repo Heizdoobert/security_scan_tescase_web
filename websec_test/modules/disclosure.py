@@ -5,6 +5,7 @@ directory listing, and stack traces on error pages.
 """
 from collections import namedtuple
 
+import requests
 from websec_test.client.session import SessionClient
 from websec_test.config.payloads import COMMON_PATHS
 from websec_test.results.models import TestResult, TestStatus, Severity
@@ -128,3 +129,145 @@ class DisclosureModule:
         results.append(self._check_stack_trace(client))
 
         return results
+
+
+# ── Check-level BT support ──────────────────────────────────────────────
+
+from websec_test.engine.registry import register
+from websec_test.engine.builder import CheckSpec
+
+DIRECTORY_LISTING_SIGNATURES = [
+    "index of", "directory listing", "<title>index of", "parent directory",
+    "name</a>", "last modified", "folder",
+]
+
+STACK_TRACE_INDICATORS = [
+    "stack trace", "stacktrace", "at ", "in <module>",
+    "file \"", "line ", "traceback", "exception",
+    "System.Exception", "java.lang", "NullPointerReference",
+]
+
+
+def _check_info_header(client, target, blackboard, header_name, test_name, severity, evidence_template, recommendation):
+    """Check if a single sensitive info header is present on the root page."""
+    endpoints = blackboard.get("disclosure_discover_endpoints", None)
+    if not endpoints:
+        return TestResult(
+            module="disclosure", test_name=test_name,
+            status=TestStatus.ERROR, severity=severity,
+            endpoint=target, evidence="No endpoints discovered",
+            recommendation=recommendation,
+        )
+    ep = endpoints[0]
+    try:
+        resp = client.get(ep.url)
+    except requests.exceptions.RequestException as e:
+        return TestResult(
+            module="disclosure", test_name=test_name,
+            status=TestStatus.ERROR, severity=severity,
+            endpoint=ep.url, evidence=f"Request failed: {e}",
+            recommendation=recommendation,
+        )
+    value = resp.headers.get(header_name, "")
+    if value:
+        return TestResult(
+            module="disclosure", test_name=test_name,
+            status=TestStatus.FAIL, severity=severity,
+            endpoint=ep.url,
+            evidence=f"{evidence_template}: {value[:100]}",
+            recommendation=f"Remove or obfuscate the {header_name} header",
+        )
+    return TestResult(
+        module="disclosure", test_name=test_name,
+        status=TestStatus.PASS, severity=severity,
+        endpoint=ep.url,
+        evidence=f"No {header_name} header present",
+        recommendation="No action needed",
+    )
+
+
+def _check_directory_listing_fn(client, target, blackboard):
+    """Check if directory listing is enabled on common paths."""
+    endpoints = blackboard.get("disclosure_discover_endpoints", None)
+    if not endpoints:
+        return TestResult(
+            module="disclosure", test_name="directory_listing",
+            status=TestStatus.ERROR, severity=Severity.HIGH,
+            endpoint=target, evidence="No endpoints discovered",
+            recommendation="Disable directory listing on the web server",
+        )
+    for ep in endpoints:
+        if ep.url == "/":
+            continue
+        try:
+            resp = client.get(ep.url)
+        except requests.exceptions.RequestException:
+            continue
+        if resp.status_code != 200:
+            continue
+        text_lower = resp.text.lower()
+        for sig in DIRECTORY_LISTING_SIGNATURES:
+            if sig in text_lower:
+                return TestResult(
+                    module="disclosure", test_name="directory_listing",
+                    status=TestStatus.FAIL, severity=Severity.HIGH,
+                    endpoint=ep.url,
+                    evidence=f"Response contains directory listing signature: '{sig}'",
+                    recommendation="Disable directory listing on the web server",
+                )
+    return TestResult(
+        module="disclosure", test_name="directory_listing",
+        status=TestStatus.PASS, severity=Severity.HIGH,
+        endpoint="/",
+        evidence="No directory listing detected",
+        recommendation="No action needed",
+    )
+
+
+def _check_stack_trace_fn(client, target, blackboard):
+    """Check if error pages reveal stack traces."""
+    try:
+        resp = client.get("/nonexistent_page_xyz_123_test")
+    except requests.exceptions.RequestException as e:
+        return TestResult(
+            module="disclosure", test_name="stack_trace_error",
+            status=TestStatus.ERROR, severity=Severity.HIGH,
+            endpoint="/nonexistent_page_xyz_123_test",
+            evidence=f"Request failed: {e}",
+            recommendation="Configure custom error pages, disable debug mode",
+        )
+    text_lower = resp.text.lower()
+    if resp.status_code == 500 or any(ind in text_lower for ind in STACK_TRACE_INDICATORS):
+        return TestResult(
+            module="disclosure", test_name="stack_trace_error",
+            status=TestStatus.FAIL, severity=Severity.HIGH,
+            endpoint="/nonexistent_page_xyz_123_test",
+            evidence=f"HTTP {resp.status_code} with possible stack trace content",
+            recommendation="Configure custom error pages, disable debug mode",
+        )
+    return TestResult(
+        module="disclosure", test_name="stack_trace_error",
+        status=TestStatus.PASS, severity=Severity.HIGH,
+        endpoint="/nonexistent_page_xyz_123_test",
+        evidence=f"HTTP {resp.status_code} with clean error page",
+        recommendation="No action needed",
+    )
+
+
+@register("disclosure")
+def disclosure_check_specs():
+    from functools import partial
+    info_checks = []
+    for header, evidence, severity in SENSITIVE_HEADERS:
+        test_name = f"info_header_{header.lower().replace('-', '_')}"
+        fn = partial(_check_info_header, header_name=header, test_name=test_name,
+                     severity=severity, evidence_template=evidence,
+                     recommendation=f"Remove or obfuscate the {header} header")
+        fn.__name__ = test_name
+        info_checks.append(CheckSpec(test_name, fn, severity=severity, module_name="disclosure"))
+    return info_checks + [
+        CheckSpec("directory_listing", _check_directory_listing_fn,
+                  severity=Severity.HIGH, module_name="disclosure"),
+        CheckSpec("stack_trace_error", _check_stack_trace_fn,
+                  severity=Severity.HIGH, module_name="disclosure"),
+    ]

@@ -5,9 +5,33 @@ from urllib.parse import urljoin, urlencode
 import requests
 from websec_test.client.session import SessionClient
 from websec_test.config.payloads import SQLI_PAYLOADS, XSS_PAYLOADS, CMD_INJECT_PAYLOADS, NOSQLI_PAYLOADS
+from websec_test.engine.builder import CheckSpec
+from websec_test.engine.registry import register
 from websec_test.results.models import TestResult, TestStatus, Severity
 
 Endpoint = namedtuple("Endpoint", ["url", "method", "param_names"])
+
+
+def _parse_form_inputs(html: str) -> list[dict]:
+    """Extract GET form action URLs and input field names from HTML.
+
+    Returns a list of dicts with keys ``url`` (relative action path) and
+    ``param_names`` (list of input name attributes).
+    """
+    import re
+    endpoints = []
+    form_pattern = re.compile(
+        r'<form[^>]*method=["\'](get|GET)["\'][^>]*>.*?</form>',
+        re.DOTALL | re.IGNORECASE
+    )
+    for form_match in form_pattern.finditer(html):
+        form_html = form_match.group(0)
+        action_match = re.search(r'action=["\']([^"\']+)', form_html)
+        action = action_match.group(1) if action_match else "/"
+        input_names = re.findall(r'<input[^>]*name=["\']([^"\']+)[^>]*>', form_html)
+        if input_names:
+            endpoints.append({"url": action, "param_names": input_names})
+    return endpoints
 
 
 class InjectionModule:
@@ -15,20 +39,8 @@ class InjectionModule:
 
     def _extract_form_inputs(self, html: str) -> list[Endpoint]:
         """Find GET forms and their input field names."""
-        import re
-        endpoints = []
-        form_pattern = re.compile(
-            r'<form[^>]*method=["\'](get|GET)["\'][^>]*>.*?</form>',
-            re.DOTALL | re.IGNORECASE
-        )
-        for form_match in form_pattern.finditer(html):
-            form_html = form_match.group(0)
-            action_match = re.search(r'action=["\']([^"\']+)', form_html)
-            action = action_match.group(1) if action_match else "/"
-            input_names = re.findall(r'<input[^>]*name=["\']([^"\']+)[^>]*>', form_html)
-            if input_names:
-                endpoints.append(Endpoint(url=action, method="GET", param_names=input_names))
-        return endpoints
+        return [Endpoint(url=ep["url"], method="GET", param_names=ep["param_names"])
+                for ep in _parse_form_inputs(html)]
 
     def _test_nosqli(self, client: SessionClient, target: str, endpoints):
         """Test for NoSQL injection via MongoDB operator payloads.
@@ -269,3 +281,145 @@ class InjectionModule:
             results.extend(self._test_nosqli(client, target, [ep]))
 
         return results
+
+
+# ── Check-level BT support ──────────────────────────────────────────────
+
+
+def _extract_form_inputs(html: str, target: str):
+    """Extract GET form endpoints with input field names from HTML."""
+    from urllib.parse import urljoin
+    endpoints = _parse_form_inputs(html)
+    for ep in endpoints:
+        ep["url"] = urljoin(target + "/", ep["url"].lstrip("/"))
+    return endpoints
+
+
+def _check_sqli_fn(client, target, blackboard):
+    """Test form inputs for SQL injection reflection."""
+    from urllib.parse import urlencode
+
+    resp = client.get("/")
+    forms = _extract_form_inputs(resp.text, target)
+    if not forms:
+        return TestResult(
+            module="injection", test_name="sqli_detection",
+            status=TestStatus.PASS, severity=Severity.CRITICAL,
+            endpoint="/", evidence="No forms with inputs found",
+            recommendation="No action needed",
+        )
+    for form in forms:
+        for param in form["param_names"]:
+            for payload in SQLI_PAYLOADS[:3]:
+                params = {param: payload}
+                url = f"{form['url']}?{urlencode(params)}"
+                try:
+                    r = client.get(url)
+                except requests.exceptions.ConnectionError:
+                    continue
+                evidence_lower = r.text.lower()
+                if any(word in evidence_lower for word in
+                       ["sql", "syntax error", "ora-", "mysql", "unclosed quotation"]):
+                    return TestResult(
+                        module="injection", test_name="sqli_detection",
+                        status=TestStatus.FAIL, severity=Severity.CRITICAL,
+                        endpoint=url,
+                        evidence=f"SQL error reflected: {r.text[:200]}",
+                        recommendation="Use parameterized queries, sanitize all inputs",
+                    )
+    return TestResult(
+        module="injection", test_name="sqli_detection",
+        status=TestStatus.PASS, severity=Severity.CRITICAL,
+        endpoint="/", evidence="No SQL errors reflected for tested payloads",
+        recommendation="No action needed",
+    )
+
+
+def _check_xss_fn(client, target, blackboard):
+    """Test form inputs for XSS payload reflection."""
+    from urllib.parse import urlencode
+
+    resp = client.get("/")
+    forms = _extract_form_inputs(resp.text, target)
+    if not forms:
+        return TestResult(
+            module="injection", test_name="xss_detection",
+            status=TestStatus.PASS, severity=Severity.HIGH,
+            endpoint="/", evidence="No forms with inputs found",
+            recommendation="No action needed",
+        )
+    for form in forms:
+        for param in form["param_names"]:
+            for payload in XSS_PAYLOADS[:3]:
+                params = {param: payload}
+                url = f"{form['url']}?{urlencode(params)}"
+                try:
+                    r = client.get(url)
+                except requests.exceptions.ConnectionError:
+                    continue
+                if payload in r.text:
+                    return TestResult(
+                        module="injection", test_name="xss_detection",
+                        status=TestStatus.FAIL, severity=Severity.HIGH,
+                        endpoint=url,
+                        evidence=f"XSS payload reflected: {payload[:100]}",
+                        recommendation="Encode all user-controlled data in responses",
+                    )
+    return TestResult(
+        module="injection", test_name="xss_detection",
+        status=TestStatus.PASS, severity=Severity.HIGH,
+        endpoint="/", evidence="No XSS payload reflection detected",
+        recommendation="No action needed",
+    )
+
+
+def _check_cmd_injection_fn(client, target, blackboard):
+    """Test form inputs for command injection output reflection."""
+    from urllib.parse import urlencode
+
+    resp = client.get("/")
+    forms = _extract_form_inputs(resp.text, target)
+    if not forms:
+        return TestResult(
+            module="injection", test_name="cmd_injection",
+            status=TestStatus.PASS, severity=Severity.CRITICAL,
+            endpoint="/", evidence="No forms with inputs found",
+            recommendation="No action needed",
+        )
+    for form in forms:
+        for param in form["param_names"]:
+            for payload in CMD_INJECT_PAYLOADS[:2]:
+                params = {param: payload}
+                url = f"{form['url']}?{urlencode(params)}"
+                try:
+                    r = client.get(url)
+                except requests.exceptions.ConnectionError:
+                    continue
+                evidence_lower = r.text.lower()
+                if any(word in evidence_lower for word in
+                       ["root:", "uid=", "volume", "directory of", "bin/"]):
+                    return TestResult(
+                        module="injection", test_name="cmd_injection",
+                        status=TestStatus.FAIL, severity=Severity.CRITICAL,
+                        endpoint=url,
+                        evidence=f"Command output reflected: {r.text[:200]}",
+                        recommendation="Never pass user input to system commands",
+                    )
+    return TestResult(
+        module="injection", test_name="cmd_injection",
+        status=TestStatus.PASS, severity=Severity.CRITICAL,
+        endpoint="/", evidence="No command output reflected",
+        recommendation="No action needed",
+    )
+
+
+@register("injection")
+def injection_check_specs():
+    return [
+        CheckSpec("sqli_detection", _check_sqli_fn,
+                  severity=Severity.CRITICAL, module_name="injection"),
+        CheckSpec("xss_detection", _check_xss_fn,
+                  severity=Severity.HIGH, module_name="injection"),
+        CheckSpec("cmd_injection", _check_cmd_injection_fn,
+                  severity=Severity.CRITICAL, module_name="injection"),
+    ]

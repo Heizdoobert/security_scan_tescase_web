@@ -27,3 +27,6 @@ reports/**/*.docx
 
 # Environment
 .env
+
+# Debug / temp scripts
+_*.py

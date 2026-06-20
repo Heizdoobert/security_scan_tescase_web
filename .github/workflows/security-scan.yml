@@ -1,0 +1,49 @@
+name: security-scan
+
+on:
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  security-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: SAST scan
+        run: python scripts/security_scanner.py . --severity high
+      - name: Vulnerability assessment
+        run: python scripts/vulnerability_assessor.py . --severity critical
+      - name: Compliance check (SOC 2)
+        run: python scripts/compliance_checker.py . --framework soc2
+
+  nightly-audit:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Full SAST scan
+        run: python scripts/security_scanner.py . --severity medium --json --output security.json
+      - name: Full vulnerability scan
+        run: python scripts/vulnerability_assessor.py . --severity high --json --output vulns.json
+      - name: Full compliance audit
+        run: python scripts/compliance_checker.py . --framework all --json --output compliance.json
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            security.json
+            vulns.json
+            compliance.json

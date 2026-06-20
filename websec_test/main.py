@@ -7,10 +7,41 @@ from websec_test.client.session import SessionClient
 from websec_test.results.collector import ResultCollector
 from websec_test.results.models import TestStatus
 from websec_test.results.reporter import Reporter
-from websec_test.engine import Sequence, ModuleAdapter, Blackboard
+from websec_test.engine import Sequence, ModuleAdapter, CheckTreeBuilder, CheckSpec, Blackboard
+
+# Module registry — maps name to a factory callable(credentials, target) returning an instance
+from websec_test.modules.headers import HeadersModule, headers_check_specs
+from websec_test.modules.auth import AuthModule, auth_check_specs
+from websec_test.modules.csrf import CSRFModule
+from websec_test.modules.injection import InjectionModule
+from websec_test.modules.authz import AuthorizationModule
+from websec_test.modules.ssl_tls import SslTlsModule
+from websec_test.modules.cors import CorsModule, cors_check_specs
+from websec_test.modules.cookies import CookiesModule
+from websec_test.modules.disclosure import DisclosureModule
+from websec_test.modules.methods import MethodsModule
 
 ALL_MODULES = ["headers", "auth", "csrf", "injection", "authz",
                 "ssl_tls", "cors", "cookies", "disclosure", "methods"]
+
+CHECK_LEVEL_MODULES = {"headers", "auth", "cors"}
+
+MODULE_FACTORIES: dict[str, type] = {
+    "headers": HeadersModule,
+    "csrf": CSRFModule,
+    "injection": InjectionModule,
+    "authz": AuthorizationModule,
+    "ssl_tls": SslTlsModule,
+    "cors": CorsModule,
+    "cookies": CookiesModule,
+    "disclosure": DisclosureModule,
+    "methods": MethodsModule,
+}
+CHECK_SPEC_REGISTRY: dict[str, list[CheckSpec]] = {
+    "headers": headers_check_specs(),
+    "auth": auth_check_specs(),
+    "cors": cors_check_specs(),
+}
 
 
 def parse_args(argv=None):
@@ -26,6 +57,8 @@ def parse_args(argv=None):
     parser.add_argument("--timeout", type=int, default=10, help="Per-request timeout in seconds")
     parser.add_argument("--log", nargs="?", const="log.txt", default=None,
                         help="Path to write plain-text log (default: log.txt)")
+    parser.add_argument("--check-level", action="store_true",
+                        help="Use per-check Behavior Tree nodes (opt-in modules: headers, auth, cors)")
     parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
     parser.add_argument("--secops", nargs="?", const=".", default=None,
                         help="Run SAST/dependency/compliance scan on a project directory")
@@ -57,42 +90,47 @@ def run(args):
     modules_to_run = args.modules or ALL_MODULES
     start = time.time()
 
-    module_map = {}
+    # Build module registry from selected modules — use factory dict for uniformity
+    def _make_module(name: str) -> object:
+        if name == "auth":
+            return AuthModule(credentials=args.auth, target=target)
+        return MODULE_FACTORIES[name]()
 
-    if "headers" in modules_to_run:
-        from websec_test.modules.headers import HeadersModule
-        module_map["headers"] = HeadersModule()
-    if "auth" in modules_to_run:
-        from websec_test.modules.auth import AuthModule
-        module_map["auth"] = AuthModule(credentials=args.auth, target=target)
-    if "csrf" in modules_to_run:
-        from websec_test.modules.csrf import CSRFModule
-        module_map["csrf"] = CSRFModule()
-    if "injection" in modules_to_run:
-        from websec_test.modules.injection import InjectionModule
-        module_map["injection"] = InjectionModule()
-    if "authz" in modules_to_run:
-        from websec_test.modules.authz import AuthorizationModule
-        module_map["authz"] = AuthorizationModule()
-    if "ssl_tls" in modules_to_run:
-        from websec_test.modules.ssl_tls import SslTlsModule
-        module_map["ssl_tls"] = SslTlsModule()
-    if "cors" in modules_to_run:
-        from websec_test.modules.cors import CorsModule
-        module_map["cors"] = CorsModule()
-    if "cookies" in modules_to_run:
-        from websec_test.modules.cookies import CookiesModule
-        module_map["cookies"] = CookiesModule()
-    if "disclosure" in modules_to_run:
-        from websec_test.modules.disclosure import DisclosureModule
-        module_map["disclosure"] = DisclosureModule()
-    if "methods" in modules_to_run:
-        from websec_test.modules.methods import MethodsModule
-        module_map["methods"] = MethodsModule()
+    module_map = {
+        name: _make_module(name)
+        for name in modules_to_run
+        if name in MODULE_FACTORIES
+    }
 
     # Build and execute Behavior Tree
     blackboard = Blackboard(client=client, target=target)
-    children = [ModuleAdapter(name, mod) for name, mod in module_map.items()]
+
+    if args.check_level:
+        children = []
+        for name in module_map:
+            if name == "headers":
+                children.append(CheckTreeBuilder.build_module(
+                    "headers",
+                    lambda c, t: HeadersModule().discover(c, t),
+                    headers_check_specs()
+                ))
+            elif name == "auth":
+                children.append(CheckTreeBuilder.build_module(
+                    "auth",
+                    lambda c, t, _auth=args.auth, _target=target: AuthModule(credentials=_auth, target=_target).discover(c, t),
+                    auth_check_specs()
+                ))
+            elif name == "cors":
+                children.append(CheckTreeBuilder.build_module(
+                    "cors",
+                    lambda c, t: CorsModule().discover(c, t),
+                    cors_check_specs()
+                ))
+            else:
+                children.append(ModuleAdapter(name, module_map[name]))
+    else:
+        children = [ModuleAdapter(name, mod) for name, mod in module_map.items()]
+
     if children:
         root = Sequence("scan", children=children)
         root.tick(blackboard)
