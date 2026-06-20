@@ -9,11 +9,13 @@ The WebSec Test project has a comprehensive SAST scanner, dependency assessor, a
 
 ## Approach
 
-Create 4 lightweight reference documents in `references/` that serve as the **source of truth** for what the tool checks and why. Each doc follows a consistent format and includes a **Tool Mapping** section that explicitly links each control or standard to the automated check (or marks it as "manual review").
+Create **7 lightweight reference documents** in `references/` that serve as the **source of truth** for what the tool checks and why. Each doc follows a consistent format and includes a **Tool Mapping** section that explicitly links each control or standard to the automated check (or marks it as "manual review").
+
+This phase covers **documentation only** — no scripts or tools. Companion scripts like `scripts/threat_modeler.py` and `scripts/secret_scanner.py` referenced by the Senior Security Engineer skill will be implemented in a separate phase.
 
 ## Document Structure
 
-All 4 documents share this layout:
+All 7 documents share this layout:
 
 ```markdown
 # Title
@@ -103,12 +105,83 @@ Format per item:
 
 Items with `_automation: planned_` are candidates for future automated checks. Items the tool already catches will say `_automation: security_scanner.py_`.
 
+### 5. `references/threat-modeling-guide.md`
+
+**Audience:** Security architects and engineers performing threat modeling
+
+Sections:
+- **STRIDE Methodology** — Explanation of each category (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege) with per-DFD-element applicability matrix (External Entities → Spoofing + Repudiation, Processes → all 6, Data Stores → Tampering + Repudiation + Info Disclosure + DoS, Data Flows → Tampering + Info Disclosure + DoS).
+- **DREAD Scoring** — Damage, Reproducibility, Exploitability, Affected Users, Discoverability — each rated 1-10, averaged for final risk score. Threshold guidance (≥7 needs named mitigation owner).
+- **Attack Trees** — How to decompose a threat into atomic attacker steps. Example: "SQL injection via login form" → enumerate endpoints → detect reflection → craft payload → exfiltrate data.
+- **DFD Creation** — How to draw data flow diagrams: external entities, processes, data stores, data flows, trust boundaries. Naming conventions and scope boundaries.
+
+**Tool Mapping:**
+| Technique | Checked By | Status |
+|-----------|-----------|--------|
+| STRIDE per DFD element | `scripts/threat_modeler.py` | Docs only (script in future phase) |
+| DREAD scoring | `scripts/threat_modeler.py` | Docs only |
+| Secret sweep | `scripts/secret_scanner.py` | Docs only |
+
+### 6. `references/security-architecture-patterns.md`
+
+**Audience:** Architects and tech leads designing secure systems
+
+**Boundary with `security_standards.md`:** This doc covers **architecture-level** patterns (system design, network topology, trust boundaries). `security_standards.md` covers **code-level** practices (OWASP, secure coding). They overlap at API security — `security_standards.md` covers OWASP API Top 10 (endpoint hardening), this doc covers API gateway patterns and auth architecture (design decisions).
+
+Sections:
+- **Zero Trust Architecture** — Never trust, always verify. Micro-segmentation, least privilege per-request auth, continuous verification vs perimeter-based. Applicability: greenfield vs brownfield, cloud-native vs hybrid.
+- **Defense in Depth** — Layered controls: network → host → application → data. Each layer has different attacker cost. Example: WAF → rate limiter → auth → input validation → parameterized queries.
+- **Authentication Architecture** — Patterns: session-based, token-based (JWT), OAuth 2.0 / OIDC flows (authorization code, PKCE, client credentials), API keys. When to use each.
+- **API Security Architecture** — Gateway patterns (rate limiting, auth aggregation, schema validation), mTLS for service-to-service, webhook signing, idempotency keys.
+- **Secret Management Architecture** — Vault vs cloud secret managers vs env vars. Rotation strategies. Emergency access procedures.
+
+### 7. `references/cryptography-implementation.md`
+
+**Audience:** Engineers implementing cryptographic operations
+
+Sections:
+- **Symmetric Encryption** — AES-GCM (recommended). Key size requirements (256-bit preferred), nonce/IV generation rules (never reuse with same key), authentication tag verification.
+- **Asymmetric Signatures** — Ed25519 (recommended over ECDSA). Why: deterministic, constant-time, smaller signatures. RSA deprecation guidance.
+- **Password Hashing** — Argon2id (recommended), bcrypt (acceptable for legacy). Cost parameters (Argon2id: 64MB memory, 3 iterations, 1 parallelism; bcrypt: cost 12+).
+- **Key Management** — HSM vs software vaults, key derivation (HKDF), key rotation schedules, emergency key destruction procedures.
+- **What Not to Use** — MD5/SHA-1 for signatures, ECB mode, RC4, custom crypto, non-constant-time comparison.
+
+**Tool Mapping:**
+| Practice | Checked By | Status |
+|----------|-----------|--------|
+| Weak crypto detection | `security_scanner.py` (SAST patterns) | Automated |
+| TLS version enforcement | SSL/TLS module | Automated |
+| Password hashing algorithm | Manual code review | Manual |
+
+## Cross-Document References
+
+Related content between docs should link explicitly:
+
+| From | To | Why |
+|------|----|-----|
+| `threat-modeling-guide.md` | `compliance_requirements.md` | Threat model findings map to compliance controls |
+| `security-architecture-patterns.md` | `security_standards.md` | Architecture patterns reference code-level practices |
+| `secure-coding-checklist.md` | `cryptography-implementation.md` | Checklist items SC-CR-001+ reference crypto standards |
+| `compliance_requirements.md` | `vulnerability_management_guide.md` | Compliance requires CVE management process |
+
 ## Error Handling / Maintenance
 
 - Control mappings are **not** code-generated — they're manually maintained alongside the compliance checker
 - When a new module or check is added to the tool, the corresponding control mapping in `compliance_requirements.md` should be updated
 - The checklist IDs are stable — once assigned, an ID is never reused (deprecated IDs are marked `[DEPRECATED]` inline)
 
-## That's the Design
+## Summary
 
-4 documents, ~2-4 pages each, following a consistent format. The key innovation is the **Tool Mapping** section that explicitly bridges standards to automated checks — making it obvious what's covered and what isn't, both for engineers and auditors.
+| # | Document | Audience | Pages |
+|---|----------|----------|-------|
+| 1 | `references/security_standards.md` | Developers, code reviewers | 4-6 |
+| 2 | `references/vulnerability_management_guide.md` | Security engineers, incident responders | 3-5 |
+| 3 | `references/compliance_requirements.md` | Compliance officers, auditors | 4-6 |
+| 4 | `references/secure-coding-checklist.md` | Developers (PR review) | 2-3 |
+| 5 | `references/threat-modeling-guide.md` | Security architects | 4-6 |
+| 6 | `references/security-architecture-patterns.md` | Architects, tech leads | 4-6 |
+| 7 | `references/cryptography-implementation.md` | Engineers implementing crypto | 3-5 |
+
+7 documents, consistent format. All share the **Tool Mapping** section that bridges standards to automated checks — making it obvious what's covered and what isn't, both for engineers and auditors.
+
+**Out of scope (future phases):** `scripts/threat_modeler.py`, `scripts/secret_scanner.py`, and the CI pipeline upgrade. This phase is documentation only.
