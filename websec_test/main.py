@@ -7,6 +7,7 @@ from websec_test.client.session import SessionClient
 from websec_test.results.collector import ResultCollector
 from websec_test.results.models import TestStatus
 from websec_test.results.reporter import Reporter
+from websec_test.engine import Sequence, ModuleAdapter, Blackboard
 
 ALL_MODULES = ["headers", "auth", "csrf", "injection", "authz",
                 "ssl_tls", "cors", "cookies", "disclosure", "methods"]
@@ -51,7 +52,7 @@ def run(args):
     # Initialize client
     client = SessionClient(target, timeout=args.timeout)
 
-    # Run selected modules
+    # Run selected modules via Behavior Tree engine
     collector = ResultCollector()
     modules_to_run = args.modules or ALL_MODULES
     start = time.time()
@@ -89,16 +90,14 @@ def run(args):
         from websec_test.modules.methods import MethodsModule
         module_map["methods"] = MethodsModule()
 
-    for name, module in module_map.items():
-        try:
-            print(f"\n[*] Running module: {name}")
-            endpoints = module.discover(client, target)
-            results = module.test(client, target, endpoints)
-            for r in results:
-                collector.add(r)
-            print(f"[+] {name}: {len(results)} tests completed")
-        except Exception as e:
-            print(f"[!] Module '{name}' failed: {e}")
+    # Build and execute Behavior Tree
+    blackboard = Blackboard(client=client, target=target)
+    children = [ModuleAdapter(name, mod) for name, mod in module_map.items()]
+    if children:
+        root = Sequence("scan", children=children)
+        root.tick(blackboard)
+    for r in blackboard.results:
+        collector.add(r)
 
     duration = time.time() - start
 

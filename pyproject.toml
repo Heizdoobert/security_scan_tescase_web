@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "websec-test"
+version = "0.1.0"
+description = "Automated web security testing tool with Behavior Tree engine"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+keywords = ["security", "testing", "web", "scanner", "behavior-tree"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.0",
+    "responses>=0.24.0",
+]
+
+[project.urls]
+Source = "https://github.com/Heizdoobert/security_scan_tescase_web"
+
+[project.scripts]
+websec-test = "websec_test.main:main"
+
+[tool.setuptools.packages.find]
+include = ["websec_test*"]

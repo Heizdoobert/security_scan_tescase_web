@@ -1,5 +1,5 @@
 import time
-import threading
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 from .nodes import Node, NodeStatus, Blackboard
 
 class Decorator(Node):
@@ -26,14 +26,12 @@ class Timeout(Decorator):
         super().__init__(name, child)
         self.max_seconds = max_seconds
     def tick(self, blackboard):
-        result = [NodeStatus.FAILURE]
-        def run():
-            result[0] = self.child.tick(blackboard)
-        t = threading.Thread(target=run)
-        t.daemon = True
-        t.start()
-        t.join(timeout=self.max_seconds)
-        return result[0]
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(self.child.tick, blackboard)
+            try:
+                return future.result(timeout=self.max_seconds)
+            except FuturesTimeout:
+                return NodeStatus.FAILURE
 
 class Invert(Decorator):
     def __init__(self, name, child):
