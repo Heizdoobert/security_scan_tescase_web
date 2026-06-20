@@ -1,0 +1,482 @@
+{
+  "target": "http://localhost:8080/Nhom_2s",
+  "timestamp": "2026-06-19T11:49:16.943846",
+  "duration_seconds": 4.5035459995269775,
+  "summary": {
+    "total": 52,
+    "pass": 25,
+    "fail": 25,
+    "warn": 1,
+    "error": 1
+  },
+  "results": [
+    {
+      "module": "headers",
+      "test_name": "check_strict_transport_security",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/",
+      "evidence": "Missing 'Strict-Transport-Security' header",
+      "recommendation": "Add 'Strict-Transport-Security: max-age=31536000; includeSubDomains' header"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_content_security_policy",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/",
+      "evidence": "Missing 'Content-Security-Policy' header",
+      "recommendation": "Add a Content-Security-Policy header to prevent XSS and data injection"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_x_frame_options",
+      "status": "fail",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "Missing 'X-Frame-Options' header",
+      "recommendation": "Add 'X-Frame-Options: DENY' or 'SAMEORIGIN' to prevent clickjacking"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_x_content_type_options",
+      "status": "fail",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "Missing 'X-Content-Type-Options' header",
+      "recommendation": "Add 'X-Content-Type-Options: nosniff' to prevent MIME sniffing"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_referrer_policy",
+      "status": "fail",
+      "severity": "low",
+      "endpoint": "/",
+      "evidence": "Missing 'Referrer-Policy' header",
+      "recommendation": "Add 'Referrer-Policy: strict-origin-when-cross-origin' header"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_permissions_policy",
+      "status": "fail",
+      "severity": "low",
+      "endpoint": "/",
+      "evidence": "Missing 'Permissions-Policy' header",
+      "recommendation": "Add 'Permissions-Policy' header to restrict browser feature access"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_cross_origin_opener_policy",
+      "status": "fail",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "Missing 'Cross-Origin-Opener-Policy' header",
+      "recommendation": "Add 'Cross-Origin-Opener-Policy: same-origin' to prevent cross-origin opener leaks"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_cross_origin_resource_policy",
+      "status": "fail",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "Missing 'Cross-Origin-Resource-Policy' header",
+      "recommendation": "Add 'Cross-Origin-Resource-Policy: same-origin' to restrict resource loading from other origins"
+    },
+    {
+      "module": "auth",
+      "test_name": "blank_password_login",
+      "status": "warn",
+      "severity": "medium",
+      "endpoint": "http://localhost:8080/Nhom_2s/Nhom_2s/login",
+      "evidence": "Submitting login with empty password",
+      "recommendation": "Enforce minimum password length and non-empty passwords"
+    },
+    {
+      "module": "auth",
+      "test_name": "sqli_login_bypass",
+      "status": "pass",
+      "severity": "critical",
+      "endpoint": "http://localhost:8080/Nhom_2s/Nhom_2s/login",
+      "evidence": "SQLi payloads rejected (no successful bypass)",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "auth",
+      "test_name": "rate_limiting",
+      "status": "fail",
+      "severity": "medium",
+      "endpoint": "http://localhost:8080/Nhom_2s/Nhom_2s/login",
+      "evidence": "No rate limiting detected (status codes: {404})",
+      "recommendation": "Implement rate limiting (e.g., HTTP 429 after N failed attempts)"
+    },
+    {
+      "module": "auth",
+      "test_name": "username_enumeration",
+      "status": "pass",
+      "severity": "medium",
+      "endpoint": "http://localhost:8080/Nhom_2s/Nhom_2s/login",
+      "evidence": "Identical responses for valid and invalid usernames",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/admin",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/WEB-INF/web.xml",
+      "evidence": "Blocked: 404",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/backup",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/config",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/.env",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/console",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/actuator",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/swagger-ui.html",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/actuator/health",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/actuator/info",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/.git/config",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/jenkins",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/api/swagger.json",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/api/v1/",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "forced_browsing",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/graphql",
+      "evidence": "Accessible: 200, content length: 4122",
+      "recommendation": "Restrict access to {path} with authentication and authorization checks"
+    },
+    {
+      "module": "authz",
+      "test_name": "idor_check",
+      "status": "fail",
+      "severity": "critical",
+      "endpoint": "['/user/1', '/profile/1', '/account/1', '/user/2', '/profile/2', '/account/2', '/user/3', '/profile/3', '/account/3']",
+      "evidence": "Sequential user endpoints accessible without auth: ['/user/1', '/profile/1', '/account/1', '/user/2', '/profile/2', '/account/2', '/user/3', '/profile/3', '/account/3']",
+      "recommendation": "Implement proper access control checks on all user-specific endpoints"
+    },
+    {
+      "module": "ssl_tls",
+      "test_name": "certificate_valid",
+      "status": "error",
+      "severity": "high",
+      "endpoint": "localhost:8080",
+      "evidence": "Connection failed: [SSL: WRONG_VERSION_NUMBER] wrong version number (_ssl.c:1077)",
+      "recommendation": "Ensure the server is reachable on port {port}"
+    },
+    {
+      "module": "ssl_tls",
+      "test_name": "weak_protocol_tls_1.0",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "localhost:8080",
+      "evidence": "TLS 1.0 connection rejected",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "ssl_tls",
+      "test_name": "hsts_preload",
+      "status": "fail",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "No HSTS header found",
+      "recommendation": "Add Strict-Transport-Security header with preload"
+    },
+    {
+      "module": "cors",
+      "test_name": "wildcard_origin",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/",
+      "evidence": "ACAO: (not set)",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "cors",
+      "test_name": "credentials_with_wildcard",
+      "status": "pass",
+      "severity": "critical",
+      "endpoint": "/",
+      "evidence": "ACAC: (not set), ACAO: (not set)",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "cors",
+      "test_name": "reflected_origin",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/",
+      "evidence": "Origin not reflected: (not set)",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "cookies",
+      "test_name": "missing_secure_flag",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/",
+      "evidence": "No cookies set",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "cookies",
+      "test_name": "missing_httponly_flag",
+      "status": "pass",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "No cookies set",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "cookies",
+      "test_name": "missing_samesite_flag",
+      "status": "pass",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "No cookies set",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "disclosure",
+      "test_name": "info_header_server",
+      "status": "pass",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "No Server header present",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "disclosure",
+      "test_name": "info_header_x_powered_by",
+      "status": "pass",
+      "severity": "low",
+      "endpoint": "/",
+      "evidence": "No X-Powered-By header present",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "disclosure",
+      "test_name": "info_header_x_aspnet_version",
+      "status": "pass",
+      "severity": "low",
+      "endpoint": "/",
+      "evidence": "No X-AspNet-Version header present",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "disclosure",
+      "test_name": "info_header_x_aspnetmvc_version",
+      "status": "pass",
+      "severity": "low",
+      "endpoint": "/",
+      "evidence": "No X-AspNetMvc-Version header present",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "disclosure",
+      "test_name": "directory_listing",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/admin",
+      "evidence": "No directory listing detected",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "disclosure",
+      "test_name": "directory_listing",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/backup",
+      "evidence": "No directory listing detected",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "disclosure",
+      "test_name": "directory_listing",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/config",
+      "evidence": "No directory listing detected",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "disclosure",
+      "test_name": "directory_listing",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/.env",
+      "evidence": "No directory listing detected",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "disclosure",
+      "test_name": "directory_listing",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/console",
+      "evidence": "No directory listing detected",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "disclosure",
+      "test_name": "stack_trace_error",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/nonexistent_page_xyz_123_test",
+      "evidence": "HTTP 200 with clean error page",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "methods",
+      "test_name": "options_allow_enumeration",
+      "status": "pass",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "OPTIONS Allow: GET, HEAD, POST, OPTIONS",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "methods",
+      "test_name": "trace_method_enabled",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/admin",
+      "evidence": "TRACE /admin returned HTTP 405 (blocked)",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "methods",
+      "test_name": "put_method_enabled",
+      "status": "pass",
+      "severity": "critical",
+      "endpoint": "/",
+      "evidence": "PUT / returned HTTP 405 (blocked)",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "methods",
+      "test_name": "delete_method_enabled",
+      "status": "pass",
+      "severity": "critical",
+      "endpoint": "/",
+      "evidence": "DELETE / returned HTTP 405 (blocked)",
+      "recommendation": "No action needed"
+    },
+    {
+      "module": "methods",
+      "test_name": "verb_tampering",
+      "status": "pass",
+      "severity": "high",
+      "endpoint": "/",
+      "evidence": "Verb tampering blocked (methods behave consistently)",
+      "recommendation": "No action needed"
+    }
+  ]
+}

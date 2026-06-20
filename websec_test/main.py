@@ -1,0 +1,210 @@
+"""CLI entry point for Web Security Test tool."""
+import argparse
+import sys
+import time
+
+from websec_test.client.session import SessionClient
+from websec_test.results.collector import ResultCollector
+from websec_test.results.models import TestStatus
+from websec_test.results.reporter import Reporter
+
+ALL_MODULES = ["headers", "auth", "csrf", "injection", "authz",
+                "ssl_tls", "cors", "cookies", "disclosure", "methods"]
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Web Security Testing CLI — automated security checks for web applications"
+    )
+    parser.add_argument("--target", help="Target URL (e.g. http://localhost:8080/app)")
+    parser.add_argument("--auth", help="Credentials in user:pass format for authenticated tests")
+    parser.add_argument("--modules", nargs="+", choices=ALL_MODULES,
+                        help="Specific modules to run (default: all)")
+    parser.add_argument("--all", action="store_true", help="Run all test modules")
+    parser.add_argument("--output", default="./reports", help="Output directory for JSON reports")
+    parser.add_argument("--timeout", type=int, default=10, help="Per-request timeout in seconds")
+    parser.add_argument("--log", nargs="?", const="log.txt", default=None,
+                        help="Path to write plain-text log (default: log.txt)")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
+    parser.add_argument("--secops", nargs="?", const=".", default=None,
+                        help="Run SAST/dependency/compliance scan on a project directory")
+    args = parser.parse_args(argv)
+    if args.all:
+        args.modules = ALL_MODULES
+    return args
+
+
+def run(args):
+    """Execute the security test suite."""
+    target = args.target.rstrip("/")
+
+    # Validate target reachability
+    print(f"\n[*] Testing target: {target}")
+    try:
+        import requests
+        resp = requests.get(target, timeout=args.timeout)
+        print(f"[+] Target reachable (HTTP {resp.status_code})")
+    except requests.RequestException as e:
+        print(f"[!] Target unreachable: {e}")
+        sys.exit(1)
+
+    # Initialize client
+    client = SessionClient(target, timeout=args.timeout)
+
+    # Run selected modules
+    collector = ResultCollector()
+    modules_to_run = args.modules or ALL_MODULES
+    start = time.time()
+
+    module_map = {}
+
+    if "headers" in modules_to_run:
+        from websec_test.modules.headers import HeadersModule
+        module_map["headers"] = HeadersModule()
+    if "auth" in modules_to_run:
+        from websec_test.modules.auth import AuthModule
+        module_map["auth"] = AuthModule(credentials=args.auth, target=target)
+    if "csrf" in modules_to_run:
+        from websec_test.modules.csrf import CSRFModule
+        module_map["csrf"] = CSRFModule()
+    if "injection" in modules_to_run:
+        from websec_test.modules.injection import InjectionModule
+        module_map["injection"] = InjectionModule()
+    if "authz" in modules_to_run:
+        from websec_test.modules.authz import AuthorizationModule
+        module_map["authz"] = AuthorizationModule()
+    if "ssl_tls" in modules_to_run:
+        from websec_test.modules.ssl_tls import SslTlsModule
+        module_map["ssl_tls"] = SslTlsModule()
+    if "cors" in modules_to_run:
+        from websec_test.modules.cors import CorsModule
+        module_map["cors"] = CorsModule()
+    if "cookies" in modules_to_run:
+        from websec_test.modules.cookies import CookiesModule
+        module_map["cookies"] = CookiesModule()
+    if "disclosure" in modules_to_run:
+        from websec_test.modules.disclosure import DisclosureModule
+        module_map["disclosure"] = DisclosureModule()
+    if "methods" in modules_to_run:
+        from websec_test.modules.methods import MethodsModule
+        module_map["methods"] = MethodsModule()
+
+    for name, module in module_map.items():
+        try:
+            print(f"\n[*] Running module: {name}")
+            endpoints = module.discover(client, target)
+            results = module.test(client, target, endpoints)
+            for r in results:
+                collector.add(r)
+            print(f"[+] {name}: {len(results)} tests completed")
+        except Exception as e:
+            print(f"[!] Module '{name}' failed: {e}")
+
+    duration = time.time() - start
+
+    # Report
+    reporter = Reporter(collector, target=target, duration=duration)
+    reporter.to_terminal()
+
+    json_path = reporter.to_json(args.output)
+    print(f"\n[*] JSON report saved to: {json_path}")
+
+    if args.log:
+        log_path = reporter.to_log(args.log)
+        print(f"[*] Log saved to: {log_path}")
+
+    # Exit code: non-zero if any FAIL or ERROR
+    fail_count = collector.by_status.get(TestStatus.FAIL, 0)
+    error_count = collector.by_status.get(TestStatus.ERROR, 0)
+    sys.exit(1 if (fail_count + error_count) > 0 else 0)
+
+
+def run_secops(project_path: str):
+    """Run the Senior SecOps toolkit: SAST scan + dependency assessment + compliance check."""
+    from websec_test.security.scanner import SecurityScanner
+    from websec_test.security.assessor import VulnerabilityAssessor
+    from websec_test.security.checker import ComplianceChecker
+    import os.path
+
+    resolved = os.path.abspath(project_path)
+    print(f"\n{'='*60}")
+    print(f"  Senior SecOps Toolkit — {resolved}")
+    print(f"{'='*60}")
+
+    # ── Phase 1: SAST scan ──────────────────────────────────────────
+    print(f"\n{'─'*60}")
+    print("  Phase 1: SAST Security Scan")
+    print(f"{'─'*60}")
+    scanner = SecurityScanner(resolved, min_severity="high")
+    findings = scanner.scan()
+    if not findings:
+        print("  [PASS] No high-severity findings")
+    else:
+        for f in findings:
+            print(f"  [{f.severity.upper()}] {f.file_path}:{f.line_number}")
+            print(f"         {f.category}: {f.evidence[:100]}")
+    print(f"  Summary: {len(findings)} findings"
+          f"  (critical={sum(1 for x in findings if x.severity=='critical')},"
+          f" high={sum(1 for x in findings if x.severity=='high')})")
+    scan_code = SecurityScanner.exit_code(findings)
+
+    # ── Phase 2: Dependency assessment ──────────────────────────────
+    print(f"\n{'─'*60}")
+    print("  Phase 2: Dependency Vulnerability Assessment")
+    print(f"{'─'*60}")
+    assessor = VulnerabilityAssessor(resolved, min_severity="high")
+    dep_result = assessor.assess()
+    if dep_result.count == 0:
+        print("  [PASS] No vulnerabilities detected")
+    else:
+        for v in dep_result.vulnerabilities:
+            print(f"  [{v.cve_id}] {v.package} {v.installed_version} (CVSS {v.cvss_score})")
+            print(f"         {v.description}")
+    print(f"  Risk score: {dep_result.risk_score:.1f}/100"
+          f"  |  {dep_result.count} total"
+          f"  (critical={dep_result.critical_count}, high={dep_result.high_count})")
+    dep_code = VulnerabilityAssessor.exit_code(dep_result)
+
+    # ── Phase 3: Compliance check ───────────────────────────────────
+    print(f"\n{'─'*60}")
+    print("  Phase 3: Compliance Framework Check")
+    print(f"{'─'*60}")
+    checker = ComplianceChecker(resolved)
+    comp_result = checker.check()
+    for fw in comp_result.frameworks:
+        status = "PASS" if fw.score_pct >= 90 else ("WARN" if fw.score_pct >= 50 else "FAIL")
+        print(f"  [{status}] {fw.framework.upper()}: {fw.score_pct:.0f}%"
+              f" ({fw.passed_count}/{fw.total} controls passed)")
+        for c in fw.controls:
+            if not c.passed:
+                print(f"         FAIL: {c.control_id} — {c.name}")
+    print(f"  Overall: {comp_result.overall_score:.0f}%"
+          f"  |  Worst: {comp_result.worst_framework}")
+    comp_code = ComplianceChecker.exit_code(comp_result)
+
+    # ── Final verdict ───────────────────────────────────────────────
+    exit_codes = [scan_code, dep_code, comp_code]
+    final_code = max(exit_codes)
+    labels = {0: "PASS", 1: "WARN", 2: "FAIL"}
+    print(f"\n{'='*60}")
+    print(f"  Final verdict: {labels[final_code]}"
+          f"  |  SAST: {labels[scan_code]}"
+          f"  |  Deps: {labels[dep_code]}"
+          f"  |  Compliance: {labels[comp_code]}")
+    print(f"{'='*60}\n")
+    sys.exit(final_code)
+
+
+def main():
+    args = parse_args()
+    if args.secops is not None:
+        run_secops(args.secops)
+    elif args.target:
+        run(args)
+    else:
+        print("[!] Specify --target <URL> for web testing or --secops [dir] for SAST scan")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

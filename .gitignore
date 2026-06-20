@@ -1,0 +1,29 @@
+# Temp/autosave files
+~$*
+*.docx~
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Reports outputs
+reports/**/*.docx
+!reports/**/*.md
+
+# Environment
+.env
