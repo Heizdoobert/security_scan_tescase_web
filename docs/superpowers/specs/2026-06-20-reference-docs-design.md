@@ -134,6 +134,8 @@ Sections:
 - **Authentication Architecture** — Patterns: session-based, token-based (JWT), OAuth 2.0 / OIDC flows (authorization code, PKCE, client credentials), API keys. When to use each.
 - **API Security Architecture** — Gateway patterns (rate limiting, auth aggregation, schema validation), mTLS for service-to-service, webhook signing, idempotency keys.
 - **Secret Management Architecture** — Vault vs cloud secret managers vs env vars. Rotation strategies. Emergency access procedures.
+- **Secret Scanning Tools** — Comparison of gitleaks, detect-secrets, truffleHog. When to use each: detect-secrets as pre-commit hook (catches before history entry), gitleaks in CI (catches slip-through). Setup guidance for both.
+- **Supply Chain Security** — SBOM generation (syft, CycloneDX format), artifact signing (Sigstore/cosign keyless OIDC), SLSA levels 1-4 with what each proves.
 
 ### 7. `references/cryptography-implementation.md`
 
@@ -179,7 +181,7 @@ Related content between docs should link explicitly:
 | 3 | `references/compliance_requirements.md` | Compliance officers, auditors | 4-6 |
 | 4 | `references/secure-coding-checklist.md` | Developers (PR review) | 2-3 |
 | 5 | `references/threat-modeling-guide.md` | Security architects | 4-6 |
-| 6 | `references/security-architecture-patterns.md` | Architects, tech leads | 4-6 |
+| 6 | `references/security-architecture-patterns.md` | Architects, tech leads | 5-7 |
 | 7 | `references/cryptography-implementation.md` | Engineers implementing crypto | 3-5 |
 
 7 documents, consistent format. All share the **Tool Mapping** section that bridges standards to automated checks — making it obvious what's covered and what isn't, both for engineers and auditors.
