@@ -25,13 +25,15 @@ class Timeout(Decorator):
     def __init__(self, name, child, max_seconds=10):
         super().__init__(name, child)
         self.max_seconds = max_seconds
+        self._executor = ThreadPoolExecutor(max_workers=1)
     def tick(self, blackboard):
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self.child.tick, blackboard)
-            try:
-                return future.result(timeout=self.max_seconds)
-            except FuturesTimeout:
-                return NodeStatus.FAILURE
+        future = self._executor.submit(self.child.tick, blackboard)
+        try:
+            return future.result(timeout=self.max_seconds)
+        except FuturesTimeout:
+            return NodeStatus.FAILURE
+    def __del__(self):
+        self._executor.shutdown(wait=False)
 
 class Invert(Decorator):
     def __init__(self, name, child):

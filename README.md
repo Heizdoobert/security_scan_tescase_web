@@ -94,6 +94,7 @@ python -m websec_test.mongodb_check --uri mongodb://localhost:27017 --json
 | `--output` | `./reports` | Directory for JSON reports |
 | `--timeout` | `10` | Per-request timeout in seconds |
 | `--log` | none | Path to write plain-text log |
+| `--check-level` | false | Use per-check Behavior Tree nodes (opt-in: headers, auth, cors) |
 | `--verbose`, `-v` | false | Increase output verbosity |
 | `--secops` | none | Run SAST/dependency/compliance scan on a project directory (defaults to `.`) |
 
@@ -185,6 +186,36 @@ root = Sequence("hardened_scan", children=[
 
 Existing module classes (`discover` + `test` pattern) work as-is — `ModuleAdapter` bridges them automatically. No rewrites needed.
 
+## Check-Level Behavior Tree (`--check-level`)
+
+The `--check-level` flag switches from module-level BT execution to **individual check-level BT nodes**. Instead of running a whole module (e.g., all header checks), each individual security check becomes its own tree node. This gives finer-grained control, better introspection, and per-check retry/timeout.
+
+**Currently supported modules** (`--check-level headers auth cors`):
+- **headers** — each security header is an independent check (HSTS, CSP, XFO, etc.)
+- **auth** — blank-password login, SQLi bypass, rate-limiting, username enumeration
+- **cors** — wildcard origin, credentials+wildcard, reflected origin
+
+**How it works:**
+1. Each check is a `CheckSpec` with a `name`, `factory` (function returning a `Check`), and optional `deps`
+2. Checks are registered in `websec_test/engine/registry.py` via `@register("module_name")` decorator
+3. `builder.build_module("headers")` reads deps and composes them into a `Sequence` tree automatically
+4. `CheckAdapter` wraps each check function into a BT `Action` node
+
+**Example check definition:**
+```python
+# websec_test/engine/registry.py
+from websec_test.engine.registry import register, CheckSpec
+
+@register("headers")
+def check_strict_transport_security():
+    return CheckSpec(
+        name="check_strict_transport_security",
+        description="Ensure HSTS header is present",
+        factory=lambda: create_check(...),
+        deps=[],  # no dependencies
+    )
+```
+
 ## How to Modding
 
 ### Adding a New Test Module
@@ -251,7 +282,7 @@ pip install --upgrade -r requirements.txt
 pytest tests/ -v
 ```
 
-184 tests covering all 10 modules, the session client, collector, reporter, CLI parser, SAST scanner, dependency assessor, compliance checker, MongoDB check, a full integration test, and the behavior tree engine. All HTTP tests mock via the `responses` library — no real network needed.
+244 tests covering all 10 modules, the session client, collector, reporter, CLI parser, SAST scanner, dependency assessor, compliance checker, MongoDB check, integration tests, the behavior tree engine, per-check behavior tree nodes, the check registry, and the BT builder. All HTTP tests mock via the `responses` library — no real network needed.
 
 ### Add Tests for a New Module
 
@@ -280,7 +311,20 @@ websec_test/
 │   ├── nodes.py                  # Node ABC, Blackboard, Sequence, Selector, Parallel
 │   ├── leaves.py                 # Action, Condition leaf nodes
 │   ├── decorators.py             # Retry, Timeout, Invert, Cooldown, Log
-│   └── adapters.py               # ModuleAdapter — wraps existing modules
+│   ├── adapters.py               # ModuleAdapter — wraps existing modules
+│   ├── builder.py                # Build BT from CheckSpec specs + deps
+│   ├── registry.py               # Registry: register & look up per-check factories
+│   └── checks/                   # Per-check BT nodes (used by --check-level)
+│       ├── auth.py               # Auth individual checks
+│       ├── authz.py              # Authorization individual checks
+│       ├── cookies.py            # Cookie individual checks
+│       ├── cors.py               # CORS individual checks
+│       ├── csrf.py               # CSRF individual checks
+│       ├── disclosure.py         # Disclosure individual checks
+│       ├── headers.py            # Header individual checks
+│       ├── injection.py          # Injection individual checks
+│       ├── methods.py            # Methods individual checks
+│       └── ssl_tls.py            # SSL/TLS individual checks
 ├── security/
 │   ├── scanner.py                # SAST pattern scanner (hardcoded secrets, SQLi, XSS, etc.)
 │   ├── assessor.py               # Dependency vulnerability assessor (CVE lookup)
@@ -291,7 +335,7 @@ websec_test/
 │   └── reporter.py               # Terminal + JSON output
 └── config/payloads.py            # Attack payload dictionaries
 
-tests/                            # 184 pytest tests
+tests/                            # 244 pytest tests
 ├── test_main.py                  # CLI entry point tests
 ├── test_session.py               # HTTP client tests
 ├── test_models.py                # Result model tests
@@ -317,7 +361,20 @@ tests/                            # 184 pytest tests
 ├── test_bt_decorators.py         # Behavior Tree decorator tests
 ├── test_bt_blackboard.py         # Blackboard unit tests
 ├── test_bt_adapters.py           # ModuleAdapter unit tests
-└── test_bt_integration.py        # Behavior Tree integration + regression
+├── test_bt_integration.py        # Behavior Tree integration + regression
+├── test_bt_builder.py            # BT builder (CheckSpec, deps, circular detection)
+├── test_bt_check_adapter.py      # BT CheckAdapter (pass/fail/skip/exception)
+├── test_bt_registry.py           # BT check registry (@register decorator)
+├── test_bt_checks_headers.py     # Per-check BT: headers module
+├── test_bt_checks_auth.py        # Per-check BT: auth module
+├── test_bt_checks_authz.py       # Per-check BT: authz module
+├── test_bt_checks_cookies.py     # Per-check BT: cookies module
+├── test_bt_checks_cors.py        # Per-check BT: cors module
+├── test_bt_checks_csrf.py        # Per-check BT: csrf module
+├── test_bt_checks_disclosure.py  # Per-check BT: disclosure module
+├── test_bt_checks_injection.py   # Per-check BT: injection module
+├── test_bt_checks_methods.py     # Per-check BT: methods module
+└── test_bt_checks_ssl_tls.py     # Per-check BT: ssl_tls module
 
 scripts/
 ├── security_scanner.py           # Standalone SAST scanner CLI

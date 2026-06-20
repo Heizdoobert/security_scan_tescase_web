@@ -6,6 +6,8 @@ and verb tampering vulnerabilities.
 from collections import namedtuple
 
 from websec_test.client.session import SessionClient
+from websec_test.engine.builder import CheckSpec
+from websec_test.engine.registry import register
 from websec_test.results.models import TestResult, TestStatus, Severity
 
 Endpoint = namedtuple("Endpoint", ["url", "method", "http_method"])
@@ -120,3 +122,144 @@ class MethodsModule:
             ))
 
         return results
+
+
+# ── Check-level BT support ──────────────────────────────────────────────
+
+
+def _check_options_allow_fn(client, target, blackboard):
+    """Check OPTIONS Allow header for dangerous methods."""
+    resp = client.session.request("OPTIONS", client._resolve_url("/"))
+    allow = resp.headers.get("Allow", "")
+    if allow:
+        dangerous_found = [m for m in (m.strip() for m in allow.split(","))
+                          if m.upper() in DANGEROUS_METHODS]
+        if dangerous_found:
+            return TestResult(
+                module="methods", test_name="options_allow_enumeration",
+                status=TestStatus.FAIL, severity=Severity.MEDIUM,
+                endpoint="/",
+                evidence=f"OPTIONS reveals dangerous methods: {', '.join(dangerous_found)}",
+                recommendation="Restrict Allow header to only necessary methods",
+            )
+        return TestResult(
+            module="methods", test_name="options_allow_enumeration",
+            status=TestStatus.PASS, severity=Severity.MEDIUM,
+            endpoint="/",
+            evidence=f"OPTIONS Allow: {allow[:100]}",
+            recommendation="No action needed",
+        )
+    return TestResult(
+        module="methods", test_name="options_allow_enumeration",
+        status=TestStatus.PASS, severity=Severity.MEDIUM,
+        endpoint="/",
+        evidence="No Allow header in OPTIONS response",
+        recommendation="No action needed",
+    )
+
+
+def _check_trace_method_fn(client, target, blackboard):
+    """Check if TRACE method is enabled."""
+    resp = client.session.request("TRACE", client._resolve_url("/admin"))
+    if resp.status_code in (200, 201, 202, 204):
+        return TestResult(
+            module="methods", test_name="trace_method_enabled",
+            status=TestStatus.FAIL, severity=Severity.HIGH,
+            endpoint="/admin",
+            evidence=f"TRACE /admin returned HTTP {resp.status_code}",
+            recommendation="Disable the TRACE method on production endpoints",
+        )
+    return TestResult(
+        module="methods", test_name="trace_method_enabled",
+        status=TestStatus.PASS, severity=Severity.HIGH,
+        endpoint="/admin",
+        evidence=f"TRACE /admin returned HTTP {resp.status_code} (blocked)",
+        recommendation="No action needed",
+    )
+
+
+def _check_put_method_fn(client, target, blackboard):
+    """Check if PUT method is enabled."""
+    resp = client.session.request("PUT", client._resolve_url("/"))
+    if resp.status_code in (200, 201, 202, 204):
+        return TestResult(
+            module="methods", test_name="put_method_enabled",
+            status=TestStatus.FAIL, severity=Severity.CRITICAL,
+            endpoint="/",
+            evidence=f"PUT / returned HTTP {resp.status_code}",
+            recommendation="Disable the PUT method on production endpoints",
+        )
+    return TestResult(
+        module="methods", test_name="put_method_enabled",
+        status=TestStatus.PASS, severity=Severity.CRITICAL,
+        endpoint="/",
+        evidence=f"PUT / returned HTTP {resp.status_code} (blocked)",
+        recommendation="No action needed",
+    )
+
+
+def _check_delete_method_fn(client, target, blackboard):
+    """Check if DELETE method is enabled."""
+    resp = client.session.request("DELETE", client._resolve_url("/"))
+    if resp.status_code in (200, 201, 202, 204):
+        return TestResult(
+            module="methods", test_name="delete_method_enabled",
+            status=TestStatus.FAIL, severity=Severity.CRITICAL,
+            endpoint="/",
+            evidence=f"DELETE / returned HTTP {resp.status_code}",
+            recommendation="Disable the DELETE method on production endpoints",
+        )
+    return TestResult(
+        module="methods", test_name="delete_method_enabled",
+        status=TestStatus.PASS, severity=Severity.CRITICAL,
+        endpoint="/",
+        evidence=f"DELETE / returned HTTP {resp.status_code} (blocked)",
+        recommendation="No action needed",
+    )
+
+
+def _check_verb_tampering_fn(client, target, blackboard):
+    """Check if verb tampering via _method parameter bypasses restrictions."""
+    resp_get = client.get("/")
+    resp_post = client.post("/", data={"test": "value"})
+    if resp_get.status_code == resp_post.status_code:
+        return TestResult(
+            module="methods", test_name="verb_tampering",
+            status=TestStatus.PASS, severity=Severity.HIGH,
+            endpoint="/",
+            evidence="Verb tampering blocked (methods behave consistently)",
+            recommendation="No action needed",
+        )
+    resp_tamper = client.session.request("POST", client._resolve_url("/"),
+                                          data={"_method": "GET"})
+    if resp_tamper.status_code == 200 and resp_tamper.status_code != resp_post.status_code:
+        return TestResult(
+            module="methods", test_name="verb_tampering",
+            status=TestStatus.FAIL, severity=Severity.HIGH,
+            endpoint="/",
+            evidence=f"Verb tampering via _method parameter bypassed (HTTP {resp_tamper.status_code})",
+            recommendation="Validate HTTP method server-side, not just from headers",
+        )
+    return TestResult(
+        module="methods", test_name="verb_tampering",
+        status=TestStatus.PASS, severity=Severity.HIGH,
+        endpoint="/",
+        evidence="Verb tampering blocked",
+        recommendation="No action needed",
+    )
+
+
+@register("methods")
+def methods_check_specs():
+    return [
+        CheckSpec("options_allow_enumeration", _check_options_allow_fn,
+                  severity=Severity.MEDIUM, module_name="methods"),
+        CheckSpec("trace_method_enabled", _check_trace_method_fn,
+                  severity=Severity.HIGH, module_name="methods"),
+        CheckSpec("put_method_enabled", _check_put_method_fn,
+                  severity=Severity.CRITICAL, module_name="methods"),
+        CheckSpec("delete_method_enabled", _check_delete_method_fn,
+                  severity=Severity.CRITICAL, module_name="methods"),
+        CheckSpec("verb_tampering", _check_verb_tampering_fn,
+                  severity=Severity.HIGH, module_name="methods"),
+    ]

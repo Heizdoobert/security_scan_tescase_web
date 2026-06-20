@@ -4,7 +4,7 @@ No external dependencies. Applies STRIDE per DFD element type, scores
 threats with DREAD, and generates structured threat analysis output.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 

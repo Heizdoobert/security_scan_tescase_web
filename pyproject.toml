@@ -38,3 +38,16 @@ websec-test = "websec_test.main:main"
 
 [tool.setuptools.packages.find]
 include = ["websec_test*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+minversion = "7.0"
+log_cli = true
+
+[tool.coverage.run]
+source = ["websec_test"]
+omit = ["*/tests/*", "*/__init__.py"]
+
+[tool.coverage.report]
+fail_under = 0
+show_missing = true

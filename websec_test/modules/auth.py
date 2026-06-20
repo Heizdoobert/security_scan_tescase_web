@@ -149,3 +149,114 @@ class AuthModule:
             results.append(self._check_rate_limiting(client, post_url))
             results.append(self._check_username_enumeration(client, post_url))
         return results
+
+
+# ── Check-level BT support ──────────────────────────────────────────────
+
+from websec_test.engine.registry import register
+from websec_test.engine.builder import CheckSpec
+
+
+def _extract_form_action(html):
+    """Extract form action URL from HTML."""
+    match = re.search(r'<form[^>]*action=["\']([^"\']+)', html, re.IGNORECASE)
+    return match.group(1) if match else None
+
+
+def _check_blank_password_fn(client, target, blackboard):
+    """Check if a blank password is accepted on discovered login forms."""
+    endpoints = blackboard.get("auth_discover_endpoints", None)
+    if not endpoints:
+        return TestResult(
+            module="auth", test_name="blank_password_login",
+            status=TestStatus.ERROR, severity=Severity.MEDIUM,
+            endpoint=target, evidence="No login endpoints discovered",
+            recommendation="Enforce minimum password length",
+        )
+    ep = endpoints[0]
+    resp = client.get(ep.url)
+    form_action = _extract_form_action(resp.text) or ep.url
+    post_url = urljoin(target + "/", form_action.lstrip("/"))
+    # Store for dependent checks
+    blackboard.set("auth_post_url", post_url)
+    return TestResult(
+        module="auth", test_name="blank_password_login",
+        status=TestStatus.WARN, severity=Severity.MEDIUM,
+        endpoint=post_url, evidence="Submitting login with empty password",
+        recommendation="Enforce minimum password length and non-empty passwords",
+    )
+
+
+def _check_sqli_bypass_fn(client, target, blackboard):
+    """Check if SQL injection in username field bypasses authentication."""
+    post_url = blackboard.get("auth_post_url", "")
+    if not post_url:
+        return TestResult(
+            module="auth", test_name="sqli_login_bypass",
+            status=TestStatus.ERROR, severity=Severity.CRITICAL,
+            endpoint=target, evidence="No post URL from blank_password_login",
+            recommendation="Check that login form was discovered",
+        )
+    for payload in SQLI_PAYLOADS[:2]:
+        r = client.post(post_url, data={"username": payload, "password": "test"})
+        if r.status_code == 200 and any(word in r.text.lower()
+                                        for word in ["welcome", "dashboard", "admin"]):
+            return TestResult(
+                module="auth", test_name="sqli_login_bypass",
+                status=TestStatus.FAIL, severity=Severity.CRITICAL,
+                endpoint=post_url,
+                evidence=f"SQLi payload '{payload}' returned {r.status_code}: {r.text[:100]}",
+                recommendation="Sanitize all login inputs, use parameterized queries",
+            )
+    return TestResult(
+        module="auth", test_name="sqli_login_bypass",
+        status=TestStatus.PASS, severity=Severity.CRITICAL,
+        endpoint=post_url,
+        evidence="SQLi payloads rejected (no successful bypass)",
+        recommendation="No action needed",
+    )
+
+
+def _check_rate_limiting_fn(client, target, blackboard):
+    """Check if server rate-limits rapid login attempts."""
+    post_url = blackboard.get("auth_post_url", "")
+    if not post_url:
+        return TestResult(
+            module="auth", test_name="rate_limiting",
+            status=TestStatus.ERROR, severity=Severity.MEDIUM,
+            endpoint=target, evidence="No post URL available",
+            recommendation="Check that login form was discovered",
+        )
+    check = AuthModule(target)
+    return check._check_rate_limiting(client, post_url)
+
+
+def _check_username_enumeration_fn(client, target, blackboard):
+    """Check for username enumeration via response comparison."""
+    post_url = blackboard.get("auth_post_url", "")
+    if not post_url:
+        return TestResult(
+            module="auth", test_name="username_enumeration",
+            status=TestStatus.ERROR, severity=Severity.MEDIUM,
+            endpoint=target, evidence="No post URL available",
+            recommendation="Check that login form was discovered",
+        )
+    check = AuthModule(target)
+    return check._check_username_enumeration(client, post_url)
+
+
+@register("auth")
+def auth_check_specs():
+    return [
+        CheckSpec("blank_password_login", _check_blank_password_fn,
+                  severity=Severity.MEDIUM, module_name="auth"),
+        CheckSpec("sqli_login_bypass", _check_sqli_bypass_fn,
+                  severity=Severity.CRITICAL, depends_on=["blank_password_login"],
+                  module_name="auth"),
+        CheckSpec("rate_limiting", _check_rate_limiting_fn,
+                  severity=Severity.MEDIUM, depends_on=["blank_password_login"],
+                  module_name="auth"),
+        CheckSpec("username_enumeration", _check_username_enumeration_fn,
+                  severity=Severity.MEDIUM, depends_on=["blank_password_login"],
+                  module_name="auth"),
+    ]

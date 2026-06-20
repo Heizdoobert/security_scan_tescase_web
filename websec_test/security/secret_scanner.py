@@ -232,11 +232,7 @@ class SecretScanner:
 
             # Find potential high-entropy tokens
             tokens = re.findall(
-                r"[A-Za-z0-9+/=_\-]{MIN_ENTROPY_STRING_LENGTH,MAX_ENTROPY_STRING_LENGTH}".replace(
-                    "MIN_ENTROPY_STRING_LENGTH", str(MIN_ENTROPY_STRING_LENGTH)
-                ).replace(
-                    "MAX_ENTROPY_STRING_LENGTH", str(MAX_ENTROPY_STRING_LENGTH)
-                ),
+                rf"[A-Za-z0-9+/=_\-]{{{MIN_ENTROPY_STRING_LENGTH},{MAX_ENTROPY_STRING_LENGTH}}}",
                 line,
             )
             for token in tokens:
@@ -303,7 +299,6 @@ class SecretScanner:
     def scan_directory(
         self,
         target: str,
-        files_scanned: Optional[List[str]] = None,
     ) -> SecretScanResult:
         """Recursively scan a directory for secrets."""
         all_secrets: List[SecretFinding] = []
@@ -333,13 +328,13 @@ class SecretScanner:
         if self.severity_filter:
             self._apply_severity_filter(result)
 
-        if files_scanned is not None:
-            files_scanned.extend(scanned)
-
         return result
 
-    def scan_git_history(self, target: str, max_commits: int = 100) -> List[SecretFinding]:
-        """Scan git history for secrets added in past commits."""
+    def scan_git_history(self, target: str, max_commits: int = 100) -> Tuple[List[SecretFinding], int]:
+        """Scan git history for secrets added in past commits.
+
+        Returns (findings, commits_scanned).
+        """
         findings: List[SecretFinding] = []
 
         try:
@@ -349,12 +344,13 @@ class SecretScanner:
                 cwd=target,
             )
         except (subprocess.TimeoutExpired, FileNotFoundError):
-            return findings
+            return findings, 0
 
         if result.returncode != 0:
-            return findings
+            return findings, 0
 
         output = result.stdout
+        commits_scanned = len(re.findall(r"^commit\s([a-f0-9]+)", output, re.MULTILINE))
         current_commit = ""
         for name, pattern, severity, recommendation in SECRET_PATTERNS:
             for match in re.finditer(pattern, output):
@@ -395,10 +391,8 @@ class SecretScanner:
         files_scanned = result.files_scanned
 
         if git_history:
-            git_findings = self.scan_git_history(target)
+            git_findings, git_commits = self.scan_git_history(target)
             all_secrets.extend(git_findings)
-            git_commits = len(set(f.path.split(":")[1] if ":" in f.path else ""
-                                   for f in git_findings if f.source == "git-history"))
 
         return SecretScanResult(
             target=target,
