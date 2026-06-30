@@ -1,6 +1,6 @@
 """Tests for XSS module."""
 import responses
-from websec_test.modules.xss import XssModule
+from websec_test.modules.injection.xss import XssModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 

@@ -89,7 +89,7 @@ def test_module_adapter_discover_test_called(blackboard):
 
 @responses.activate
 def test_module_adapter_real_module(blackboard):
-    from websec_test.modules.headers import HeadersModule
+    from websec_test.modules.configuration.headers import HeadersModule
     responses.get("http://example.com/",
                   status=200,
                   headers={"X-Frame-Options": "DENY"})

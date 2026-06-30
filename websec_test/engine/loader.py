@@ -6,41 +6,35 @@ Convention: every .py file in modules/ (except __init__.py) is a module.
 import importlib
 import inspect
 import pkgutil
-import sys
-from pathlib import Path
-
-from .builder import CheckSpec
-from .registry import check_registry
 
 
 def discover_modules():
-    """Scan websec_test.modules for module classes and their check specs.
+    """Scan websec_test.modules for module classes.
 
     Returns:
-        module_names: list[str] — sorted module names
+        module_names: list[str] — sorted local module names
         module_factories: dict[str, type] — name → class
-        check_spec_registry: dict[str, list[CheckSpec]] — name → specs
     """
     import websec_test.modules as pkg
 
     module_names = []
     module_factories = {}
-    check_spec_registry = {}
-
-    for importer, modname, ispkg in pkgutil.iter_modules(pkg.__path__):
-        if modname.startswith("_") or ispkg:
+    for importer, modname, ispkg in pkgutil.walk_packages(pkg.__path__, prefix=pkg.__name__ + "."):
+        if ispkg:
             continue
-
+        parts = modname.split(".")
+        local_name = ".".join(parts[2:])
+        if parts[-1].startswith("_"):
+            continue
         try:
-            mod = importlib.import_module(f"websec_test.modules.{modname}")
+            mod = importlib.import_module(modname)
         except Exception as e:
-            print(f"[!] Failed to load module '{modname}': {e}")
+            print(f"[!] Failed to load module '{local_name}': {e}")
             continue
-
-        # Find module class: any class with both discover() and test() methods
         module_class = None
         for name, obj in inspect.getmembers(mod, inspect.isclass):
-            if name == modname.capitalize() + "Module":
+            local_cls_name = parts[-1].capitalize() + "Module"
+            if name == local_cls_name:
                 module_class = obj
                 break
         if module_class is None:
@@ -50,15 +44,7 @@ def discover_modules():
                     break
         if module_class is None:
             continue
-
-        module_names.append(modname)
-        module_factories[modname] = module_class
-
-        # Get check specs from registry (registered via @register decorator)
-        if modname in check_registry:
-            check_spec_registry[modname] = check_registry[modname]()
-        else:
-            check_spec_registry[modname] = []
-
+        module_names.append(local_name)
+        module_factories[local_name] = module_class
     module_names.sort()
-    return module_names, module_factories, check_spec_registry
+    return module_names, module_factories

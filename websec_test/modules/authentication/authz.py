@@ -5,8 +5,6 @@ import requests
 from websec_test.client.session import SessionClient
 from websec_test.config.payloads import COMMON_PATHS
 from websec_test.results.models import TestResult, TestStatus, Severity
-from websec_test.engine.registry import register
-from websec_test.engine.builder import CheckSpec
 
 Endpoint = namedtuple("Endpoint", ["url", "method"])
 
@@ -106,86 +104,3 @@ class AuthorizationModule:
 
         return results
 
-
-# ── Check-level BT support ──────────────────────────────────────────────
-
-
-_404_BODY_KEYWORDS = ["not found", "404", "page not found", "error 404"]
-
-
-def _is_not_found(resp) -> bool:
-    """Check if a response is likely a 404/not-found page regardless of status."""
-    if resp.status_code == 404:
-        return True
-    body_lower = resp.text.lower()
-    return any(kw in body_lower for kw in _404_BODY_KEYWORDS)
-
-
-def _check_forced_browsing_fn(client, target, blackboard):
-    """Check common admin/config paths for unauthorized access."""
-    first_open = None
-    for path in COMMON_PATHS:
-        try:
-            resp = client.get(path)
-        except requests.exceptions.RequestException as e:
-            return TestResult(
-                module="authz", test_name="forced_browsing",
-                status=TestStatus.ERROR, severity=Severity.HIGH,
-                endpoint=path, evidence=f"Request failed: {e}",
-                recommendation="Check server availability",
-            )
-        if resp.status_code == 200 and len(resp.text) > 50 and not _is_not_found(resp):
-            first_open = path
-            break
-    if first_open:
-        return TestResult(
-            module="authz", test_name="forced_browsing",
-            status=TestStatus.FAIL, severity=Severity.HIGH,
-            endpoint=first_open,
-            evidence=f"Accessible admin/config path without auth: {first_open}",
-            recommendation="Restrict access to admin/config paths with proper authentication",
-        )
-    return TestResult(
-        module="authz", test_name="forced_browsing",
-        status=TestStatus.PASS, severity=Severity.HIGH,
-        endpoint="/admin", evidence="All common paths blocked or return 404",
-        recommendation="No action needed",
-    )
-
-
-def _check_idor_fn(client, target, blackboard):
-    """Check for sequential user ID enumeration (IDOR)."""
-    candidates = []
-    for uid in [1, 2, 3]:
-        for pattern in [f"/user/{uid}", f"/profile/{uid}", f"/account/{uid}"]:
-            try:
-                resp = client.get(pattern)
-            except requests.exceptions.RequestException:
-                continue
-            if resp.status_code == 200 and len(resp.text) > 50:
-                candidates.append(pattern)
-    if candidates:
-        return TestResult(
-            module="authz", test_name="idor_check",
-            status=TestStatus.FAIL, severity=Severity.CRITICAL,
-            endpoint=str(candidates),
-            evidence=f"Sequential user endpoints accessible without auth: {candidates}",
-            recommendation="Implement proper access control checks on all user-specific endpoints",
-        )
-    return TestResult(
-        module="authz", test_name="idor_check",
-        status=TestStatus.PASS, severity=Severity.CRITICAL,
-        endpoint="/user/{id}",
-        evidence="No sequential user endpoints discovered",
-        recommendation="No action needed",
-    )
-
-
-@register("authz")
-def authz_check_specs():
-    return [
-        CheckSpec("forced_browsing", _check_forced_browsing_fn,
-                  severity=Severity.HIGH, module_name="authz"),
-        CheckSpec("idor_check", _check_idor_fn,
-                  severity=Severity.CRITICAL, module_name="authz"),
-    ]

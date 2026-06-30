@@ -1,6 +1,6 @@
 """Tests for auth module."""
 import responses
-from websec_test.modules.auth import AuthModule
+from websec_test.modules.authentication.auth import AuthModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 

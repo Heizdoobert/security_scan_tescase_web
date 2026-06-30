@@ -1,6 +1,6 @@
 """Tests for command injection module."""
 import responses
-from websec_test.modules.cmd_injection import CmdInjectionModule
+from websec_test.modules.injection.cmd_injection import CmdInjectionModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 

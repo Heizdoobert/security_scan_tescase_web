@@ -1,7 +1,7 @@
 """Tests for NoSQL injection module."""
 import re
 import responses
-from websec_test.modules.nosql import NosqlModule
+from websec_test.modules.injection.nosql import NosqlModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 

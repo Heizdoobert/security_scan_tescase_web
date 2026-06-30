@@ -2,7 +2,7 @@
 import ssl
 from unittest.mock import MagicMock, patch
 
-from websec_test.modules.ssl_tls import SslTlsModule
+from websec_test.modules.configuration.ssl_tls import SslTlsModule
 from websec_test.results.models import TestStatus
 
 
@@ -30,8 +30,8 @@ def test_discover_http():
     assert endpoints[0].port == 8080
 
 
-@patch("websec_test.modules.ssl_tls.socket.create_connection")
-@patch("websec_test.modules.ssl_tls.ssl.SSLContext")
+@patch("websec_test.modules.configuration.ssl_tls.socket.create_connection")
+@patch("websec_test.modules.configuration.ssl_tls.ssl.SSLContext")
 def test_certificate_valid(mock_ssl_context, mock_create_connection):
     """Valid certificate with future expiry should pass."""
     mock_ctx = MagicMock()
@@ -51,8 +51,8 @@ def test_certificate_valid(mock_ssl_context, mock_create_connection):
     assert results[0].status == TestStatus.PASS
 
 
-@patch("websec_test.modules.ssl_tls.socket.create_connection")
-@patch("websec_test.modules.ssl_tls.ssl.SSLContext")
+@patch("websec_test.modules.configuration.ssl_tls.socket.create_connection")
+@patch("websec_test.modules.configuration.ssl_tls.ssl.SSLContext")
 def test_certificate_expired(mock_ssl_context, mock_create_connection):
     """Expired certificate should fail."""
     mock_ctx = MagicMock()
@@ -71,8 +71,8 @@ def test_certificate_expired(mock_ssl_context, mock_create_connection):
     assert results[0].status == TestStatus.FAIL
 
 
-@patch("websec_test.modules.ssl_tls.socket.create_connection")
-@patch("websec_test.modules.ssl_tls.ssl.SSLContext")
+@patch("websec_test.modules.configuration.ssl_tls.socket.create_connection")
+@patch("websec_test.modules.configuration.ssl_tls.ssl.SSLContext")
 def test_certificate_connection_refused(mock_ssl_context, mock_create_connection):
     """Connection refused should return ERROR."""
     mock_create_connection.side_effect = ConnectionRefusedError("Connection refused")
@@ -83,8 +83,8 @@ def test_certificate_connection_refused(mock_ssl_context, mock_create_connection
     assert results[0].status == TestStatus.ERROR
 
 
-@patch("websec_test.modules.ssl_tls.socket.create_connection")
-@patch("websec_test.modules.ssl_tls.ssl.SSLContext")
+@patch("websec_test.modules.configuration.ssl_tls.socket.create_connection")
+@patch("websec_test.modules.configuration.ssl_tls.ssl.SSLContext")
 def test_weak_protocol_rejected(mock_ssl_context, mock_create_connection):
     """TLS 1.0 connection rejected should return PASS."""
     mock_ctx = MagicMock()

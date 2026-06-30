@@ -1,6 +1,6 @@
 """Tests for CSRF module."""
 import responses
-from websec_test.modules.csrf import CSRFModule
+from websec_test.modules.authentication.csrf import CSRFModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 

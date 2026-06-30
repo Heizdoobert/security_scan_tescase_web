@@ -1,6 +1,6 @@
 """Tests for HTTP methods security module."""
 import responses
-from websec_test.modules.methods import MethodsModule
+from websec_test.modules.configuration.methods import MethodsModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 

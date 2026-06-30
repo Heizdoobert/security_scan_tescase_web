@@ -7,14 +7,12 @@ from websec_test.client.session import SessionClient
 from websec_test.results.collector import ResultCollector
 from websec_test.results.models import TestStatus
 from websec_test.results.reporter import Reporter
-from websec_test.engine import Sequence, ModuleAdapter, CheckTreeBuilder, Blackboard, DiscoverAction, CheckAdapter
+from websec_test.engine import Sequence, ModuleAdapter, Blackboard, CheckTreeBuilder
 
 # Module registry — dynamically discovered from websec_test/modules/
 from websec_test.engine.loader import discover_modules
 
-ALL_MODULES, MODULE_FACTORIES, CHECK_SPEC_REGISTRY = discover_modules()
-
-CHECK_LEVEL_MODULES = set(ALL_MODULES)
+ALL_MODULES, MODULE_FACTORIES = discover_modules()
 
 
 def parse_args(argv=None):
@@ -30,8 +28,6 @@ def parse_args(argv=None):
     parser.add_argument("--timeout", type=int, default=10, help="Per-request timeout in seconds")
     parser.add_argument("--log", nargs="?", const="log.txt", default=None,
                         help="Path to write plain-text log (default: log.txt)")
-    parser.add_argument("--check-level", action="store_true",
-                        help="Use per-check Behavior Tree nodes for all modules")
     parser.add_argument("--check", help="Run a single check (format: module/check_name, "
                         "e.g. headers/check_strict_transport_security)")
     parser.add_argument("--discover", action="store_true",
@@ -50,13 +46,9 @@ def parse_args(argv=None):
 
 
 def run_discover(client, target, module_map):
-    """Discover-mode: run discovery only, print endpoints and checks, no test execution."""
-    total_checks = 0
+    """Discover-mode: run discovery only, print endpoints, no test execution."""
     total_endpoints = 0
     module_count = len(module_map)
-    severity_labels = {
-        2: "HIGH", 1: "MEDIUM", 0: "LOW",
-    }
 
     print(f"\n  {'='*56}")
     print(f"  Discover mode for target: {target}")
@@ -71,26 +63,15 @@ def run_discover(client, target, module_map):
 
         total_endpoints += len(eps)
 
-        # Get known checks for this module
-        spec_list = CHECK_SPEC_REGISTRY.get(name, [])
-        total_checks += len(spec_list)
-
         print(f"  Module: {name}")
         print(f"    Discovered endpoints ({len(eps)}):")
         for ep in eps:
             print(f"      {ep.method or 'GET'} {ep.url}")
-        if spec_list:
-            print(f"    Checks ({len(spec_list)}):")
-            for spec in spec_list:
-                sev = severity_labels.get(spec.severity, str(spec.severity))
-                print(f"      {spec.name} ({sev})")
-        else:
-            print(f"    Runs {name}/test() — no per-check breakdown available")
         print()
 
-    print(f"  {'─'*56}")
+    print(f"  {'='*56}")
     print(f"  Discover mode complete: {module_count} modules, "
-          f"{total_checks} checks across {total_endpoints} endpoints")
+          f"{total_endpoints} endpoints discovered")
     print(f"  {'='*56}")
     print("  Use --all or --modules <names> to run tests against these endpoints.\n")
 
@@ -138,7 +119,6 @@ def run(args):
         sys.exit(0)
 
     if args.check:
-        # ── Single-check mode: module/check_name ─────────────────────
         if "/" not in args.check:
             print("[!] --check must be in format: module/check_name "
                   "(e.g. headers/check_strict_transport_security)")
@@ -147,50 +127,30 @@ def run(args):
         if module_name not in MODULE_FACTORIES:
             print(f"[!] Unknown module: {module_name}")
             sys.exit(1)
-        if module_name not in CHECK_SPEC_REGISTRY:
-            print(f"[!] Module '{module_name}' does not support per-check execution")
-            sys.exit(1)
-        specs = CHECK_SPEC_REGISTRY[module_name]
-        matching = [s for s in specs if s.name == check_name]
-        if not matching:
-            available = ", ".join(s.name for s in specs)
-            print(f"[!] Unknown check '{check_name}' in module '{module_name}'. "
-                  f"Available: {available}")
-            sys.exit(1)
-        spec = matching[0]
-
-        # Instantiate module from discovered factories
         cls = MODULE_FACTORIES[module_name]
-        if module_name == "auth":
-            mod = cls(credentials=args.auth, target=target)
-        else:
-            mod = cls()
-
-        dis_fn = lambda c, t, _mod=mod: _mod.discover(c, t)
-        tree = Sequence(module_name, children=[
-            DiscoverAction(f"{module_name}_discover", dis_fn),
-            CheckAdapter(spec.name, spec.fn, module_name),
-        ])
-        tree.tick(blackboard)
+        mod = cls(credentials=args.auth, target=target) if module_name == "auth" else cls()
+        endpoints = mod.discover(client, target)
+        results = mod.test(client, target, endpoints)
+        matching = [r for r in (results or []) if r.test_name == check_name]
+        if not matching:
+            print(f"[!] No result for check '{check_name}' in module '{module_name}'")
+            sys.exit(1)
+        for r in matching:
+            blackboard.add_result(r)
         print(f"[*] Running single check: {args.check}")
 
-    elif args.check_level:
-        children = []
-        for name in module_map:
-            if name in CHECK_SPEC_REGISTRY:
-                children.append(CheckTreeBuilder.build_module(
-                    name,
-                    module_map[name].discover,
-                    CHECK_SPEC_REGISTRY[name],
-                ))
-            else:
-                children.append(ModuleAdapter(name, module_map[name]))
     else:
-        children = [ModuleAdapter(name, mod) for name, mod in module_map.items()]
-
-    if children:
+        children = []
+        for name, mod in module_map.items():
+            eps = mod.discover(client, target)
+            check_methods = [m for m in dir(mod) if m.startswith("check_")]
+            if check_methods:
+                children.append(CheckTreeBuilder.build(mod, name, eps))
+            else:
+                children.append(ModuleAdapter(name, mod))
         root = Sequence("scan", children=children)
         root.tick(blackboard)
+
     for r in blackboard.results:
         collector.add(r)
 
@@ -229,10 +189,10 @@ def run_secops(project_path: str):
     print(f"  Senior SecOps Toolkit — {resolved}")
     print(f"{'='*60}")
 
-    # ── Phase 1: SAST scan ──────────────────────────────────────────
-    print(f"\n{'─'*60}")
+    # ── Phase 1: SAST scan ──
+    print(f"\n{'='*60}")
     print("  Phase 1: SAST Security Scan")
-    print(f"{'─'*60}")
+    print(f"{'='*60}")
     scanner = SecurityScanner(resolved, min_severity="high")
     findings = scanner.scan()
     if not findings:
@@ -246,10 +206,10 @@ def run_secops(project_path: str):
           f" high={sum(1 for x in findings if x.severity=='high')})")
     scan_code = SecurityScanner.exit_code(findings)
 
-    # ── Phase 2: Dependency assessment ──────────────────────────────
-    print(f"\n{'─'*60}")
+    # ── Phase 2: Dependency assessment ──
+    print(f"\n{'='*60}")
     print("  Phase 2: Dependency Vulnerability Assessment")
-    print(f"{'─'*60}")
+    print(f"{'='*60}")
     assessor = VulnerabilityAssessor(resolved, min_severity="high")
     dep_result = assessor.assess()
     if dep_result.count == 0:
@@ -263,10 +223,10 @@ def run_secops(project_path: str):
           f"  (critical={dep_result.critical_count}, high={dep_result.high_count})")
     dep_code = VulnerabilityAssessor.exit_code(dep_result)
 
-    # ── Phase 3: Compliance check ───────────────────────────────────
-    print(f"\n{'─'*60}")
+    # ── Phase 3: Compliance check ──
+    print(f"\n{'='*60}")
     print("  Phase 3: Compliance Framework Check")
-    print(f"{'─'*60}")
+    print(f"{'='*60}")
     checker = ComplianceChecker(resolved)
     comp_result = checker.check()
     for fw in comp_result.frameworks:

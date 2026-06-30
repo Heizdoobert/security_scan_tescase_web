@@ -73,7 +73,7 @@ def test_target_reachable(vulnerable_app):
 
 def test_headers_fail_on_vulnerable_app(vulnerable_app):
     from websec_test.client.session import SessionClient
-    from websec_test.modules.headers import HeadersModule
+    from websec_test.modules.configuration.headers import HeadersModule
     from websec_test.results.models import TestStatus
 
     client = SessionClient(TARGET)
@@ -86,7 +86,7 @@ def test_headers_fail_on_vulnerable_app(vulnerable_app):
 
 def test_disclosure_fails_on_vulnerable_app(vulnerable_app):
     from websec_test.client.session import SessionClient
-    from websec_test.modules.disclosure import DisclosureModule
+    from websec_test.modules.configuration.disclosure import DisclosureModule
     from websec_test.results.models import TestStatus
 
     client = SessionClient(TARGET)
@@ -108,12 +108,3 @@ def test_full_scan_exit_code(vulnerable_app):
     assert exc.value.code == 1, "Expected exit code 1 (vulnerabilities found)"
 
 
-def test_bt_check_level_exit_code(vulnerable_app):
-    """Check-level BT scan should also exit 1."""
-    import sys
-    from websec_test.main import run, parse_args
-
-    args = parse_args(["--target", TARGET, "--all", "--check-level", "--output", "./reports"])
-    with pytest.raises(SystemExit) as exc:
-        run(args)
-    assert exc.value.code == 1, "Expected exit code 1 (vulnerabilities found)"

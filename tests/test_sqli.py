@@ -1,6 +1,6 @@
 """Tests for SQL injection module."""
 import responses
-from websec_test.modules.sqli import SqliModule
+from websec_test.modules.injection.sqli import SqliModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 

@@ -1,7 +1,6 @@
 """Security headers test module."""
 from collections import namedtuple
 
-import requests
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestResult, TestStatus, Severity
 
@@ -86,68 +85,3 @@ class HeadersModule:
                 ))
         return results
 
-
-# ── Check-level BT support ──────────────────────────────────────────────
-
-from websec_test.engine.registry import register
-from websec_test.engine.builder import CheckSpec
-
-
-def _check_single_header(client, target, blackboard, header_name, info):
-    """Check if a single security header is present.
-
-    Reads endpoints from blackboard (set by DiscoverAction).
-    """
-    endpoints = blackboard.get("headers_discover_endpoints", None)
-    if not endpoints:
-        return TestResult(
-            module="headers",
-            test_name=f"check_{header_name.replace('-', '_').lower()}",
-            status=TestStatus.ERROR,
-            severity=info["severity"],
-            endpoint=target,
-            evidence="No endpoints discovered",
-            recommendation=info["recommendation"],
-        )
-    ep = endpoints[0]
-    try:
-        resp = client.get(ep.url)
-    except requests.exceptions.RequestException as e:
-        return TestResult(
-            module="headers",
-            test_name=f"check_{header_name.replace('-', '_').lower()}",
-            status=TestStatus.ERROR,
-            severity=info["severity"],
-            endpoint=ep.url,
-            evidence=f"Request failed: {e}",
-            recommendation=info["recommendation"],
-        )
-    present = header_name in resp.headers
-    status = TestStatus.PASS if present else TestStatus.FAIL
-    evidence = f"{header_name}: {resp.headers.get(header_name, 'MISSING')}"
-    return TestResult(
-        module="headers",
-        test_name=f"check_{header_name.replace('-', '_').lower()}",
-        status=status,
-        severity=info["severity"],
-        endpoint=ep.url,
-        evidence=evidence,
-        recommendation=info["recommendation"],
-    )
-
-
-@register("headers")
-def headers_check_specs():
-    """Build CheckSpec list for headers module."""
-    from functools import partial
-    result = []
-    for header, info in HEADER_CHECKS.items():
-        fn = partial(_check_single_header, header_name=header, info=info)
-        fn.__name__ = f"check_{header.replace('-', '_').lower()}"
-        result.append(CheckSpec(
-            name=f"check_{header.replace('-', '_').lower()}",
-            fn=fn,
-            severity=info["severity"],
-            module_name="headers",
-        ))
-    return result
