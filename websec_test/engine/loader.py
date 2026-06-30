@@ -12,13 +12,15 @@ def discover_modules():
     """Scan websec_test.modules for module classes.
 
     Returns:
-        module_names: list[str] — sorted local module names
-        module_factories: dict[str, type] — name → class
+        module_names: list[str] — sorted dotted names (e.g. "configuration.headers")
+        module_factories: dict[str, type] — dotted name → class
+        short_name_map: dict[str, str] — short name → dotted name (e.g. "headers" → "configuration.headers")
     """
     import websec_test.modules as pkg
 
     module_names = []
     module_factories = {}
+    short_name_map = {}
     for importer, modname, ispkg in pkgutil.walk_packages(pkg.__path__, prefix=pkg.__name__ + "."):
         if ispkg:
             continue
@@ -46,5 +48,8 @@ def discover_modules():
             continue
         module_names.append(local_name)
         module_factories[local_name] = module_class
+        short = parts[-1]
+        if short not in short_name_map:
+            short_name_map[short] = local_name
     module_names.sort()
-    return module_names, module_factories
+    return module_names, module_factories, short_name_map

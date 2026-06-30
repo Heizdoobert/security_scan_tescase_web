@@ -1,0 +1,611 @@
+﻿diff --git a/tests/test_bt_decorators.py b/tests/test_bt_decorators.py
+index 007767c..b46e607 100644
+--- a/tests/test_bt_decorators.py
++++ b/tests/test_bt_decorators.py
+@@ -1,19 +1,16 @@
+-"""Tests for behavior tree decorators."""
++"""Tests for Retry, Timeout, Invert decorators."""
+ import time
+ import pytest
+-from websec_test.engine.nodes import Node, NodeStatus, Blackboard, Sequence
++from websec_test.engine.nodes import Node, NodeStatus, Blackboard
+ from websec_test.engine.leaves import Action
+-from websec_test.engine.decorators import Retry, Timeout, Invert, Cooldown, Log
++from websec_test.engine.decorators import Decorator, Retry, Timeout, Invert
+ 
+ 
+-# ΓöÇΓöÇ Helper actions ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-
+ class FailingAction(Action):
+     def __init__(self, name, fail_count=1):
+         super().__init__(name)
+         self.fail_count = fail_count
+         self.call_count = 0
+-
+     def do_tick(self, blackboard):
+         self.call_count += 1
+         if self.call_count <= self.fail_count:
+@@ -26,7 +23,6 @@ class SleepingAction(Action):
+         super().__init__(name)
+         self.duration = duration
+         self.result = result
+-
+     def do_tick(self, blackboard):
+         time.sleep(self.duration)
+         return self.result
+@@ -37,11 +33,8 @@ class TrackedAction(Action):
+         super().__init__(name)
+         self.result = result
+         self.call_count = 0
+-        self.last_bb = None
+-
+     def do_tick(self, blackboard):
+         self.call_count += 1
+-        self.last_bb = blackboard
+         return self.result
+ 
+ 
+@@ -50,77 +43,88 @@ def blackboard():
+     return Blackboard(client="mock_client", target="http://example.com")
+ 
+ 
++# ΓöÇΓöÇ Decorator base ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++
++def test_decorator_delegates(blackboard):
++    child = TrackedAction("child", NodeStatus.FAILURE)
++    d = Decorator("dec", child)
++    assert d.tick(blackboard) == NodeStatus.FAILURE
++    assert child.call_count == 1
++
++
+ # ΓöÇΓöÇ Retry ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ 
+-def test_retry_succeeds_after_retry(blackboard):
++def test_retry_succeeds_on_first_try(blackboard):
++    child = FailingAction("ok", fail_count=0)
++    retry = Retry("retry", child, max_retries=2)
++    assert retry.tick(blackboard) == NodeStatus.SUCCESS
++    assert child.call_count == 1
++
++
++def test_retry_succeeds_after_retries(blackboard):
+     child = FailingAction("fails_twice", fail_count=2)
+-    retry = Retry("retry", child, max_attempts=3)
++    retry = Retry("retry", child, max_retries=2)
+     assert retry.tick(blackboard) == NodeStatus.SUCCESS
+     assert child.call_count == 3
+ 
+ 
+ def test_retry_exhausted(blackboard):
+     child = FailingAction("always_fails", fail_count=999)
+-    retry = Retry("retry", child, max_attempts=3)
++    retry = Retry("retry", child, max_retries=2)
+     assert retry.tick(blackboard) == NodeStatus.FAILURE
+     assert child.call_count == 3
+ 
+ 
++def test_retry_default_max_retries(blackboard):
++    child = FailingAction("fails_once", fail_count=1)
++    retry = Retry("retry", child)
++    assert retry.tick(blackboard) == NodeStatus.SUCCESS
++    assert child.call_count == 2
++
++
++def test_retry_zero_retries(blackboard):
++    child = FailingAction("fails_always", fail_count=1)
++    retry = Retry("retry", child, max_retries=0)
++    assert retry.tick(blackboard) == NodeStatus.FAILURE
++    assert child.call_count == 1
++
++
+ # ΓöÇΓöÇ Timeout ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ 
+ def test_timeout_exceeds(blackboard):
+     child = SleepingAction("slow", duration=0.3)
+-    timeout = Timeout("t", child, max_seconds=0.05)
++    timeout = Timeout("t", child, timeout=0.05)
+     result = timeout.tick(blackboard)
+     assert result == NodeStatus.FAILURE
+ 
+ 
+ def test_timeout_within_limit(blackboard):
+     child = SleepingAction("fast", duration=0.01, result=NodeStatus.SUCCESS)
+-    timeout = Timeout("t", child, max_seconds=1.0)
++    timeout = Timeout("t", child, timeout=1.0)
+     assert timeout.tick(blackboard) == NodeStatus.SUCCESS
+ 
+ 
+-# ΓöÇΓöÇ Invert ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-
+-def test_invert_flips(blackboard):
+-    fail_child = TrackedAction("fail", NodeStatus.FAILURE)
+-    inv = Invert("inv", fail_child)
+-    assert inv.tick(blackboard) == NodeStatus.SUCCESS
+-
+-    success_child = TrackedAction("ok", NodeStatus.SUCCESS)
+-    inv2 = Invert("inv2", success_child)
+-    assert inv2.tick(blackboard) == NodeStatus.FAILURE
+-
++def test_timeout_default(blackboard):
++    child = SleepingAction("instant", duration=0.001, result=NodeStatus.SUCCESS)
++    timeout = Timeout("t", child)
++    assert timeout.tick(blackboard) == NodeStatus.SUCCESS
+ 
+-# ΓöÇΓöÇ Cooldown ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ 
+-def test_cooldown_skips(blackboard):
+-    child = TrackedAction("counted")
+-    cd = Cooldown("cd", child, min_interval=60)
+-    cd.tick(blackboard)
+-    child.call_count = 0
+-    result = cd.tick(blackboard)
+-    assert result == NodeStatus.SUCCESS
+-    assert child.call_count == 0
++# ΓöÇΓöÇ Invert ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ 
++def test_invert_success_to_failure(blackboard):
++    child = TrackedAction("ok", NodeStatus.SUCCESS)
++    inv = Invert("inv", child)
++    assert inv.tick(blackboard) == NodeStatus.FAILURE
+ 
+-def test_cooldown_allows(blackboard):
+-    child = TrackedAction("counted")
+-    cd = Cooldown("cd", child, min_interval=0)
+-    cd.tick(blackboard)
+-    child.call_count = 0
+-    result = cd.tick(blackboard)
+-    assert result == NodeStatus.SUCCESS
+-    assert child.call_count == 1
+ 
++def test_invert_failure_to_success(blackboard):
++    child = TrackedAction("fail", NodeStatus.FAILURE)
++    inv = Invert("inv", child)
++    assert inv.tick(blackboard) == NodeStatus.SUCCESS
+ 
+-# ΓöÇΓöÇ Log ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ 
+-def test_log_pass_through(blackboard, capsys):
+-    child = TrackedAction("inner", NodeStatus.FAILURE)
+-    log = Log("loggy", child, label="test_log")
+-    assert log.tick(blackboard) == NodeStatus.FAILURE
+-    captured = capsys.readouterr()
+-    assert "test_log" in captured.out
+-    assert "failure" in captured.out
++def test_invert_running_unchanged(blackboard):
++    child = TrackedAction("running", NodeStatus.RUNNING)
++    inv = Invert("inv", child)
++    assert inv.tick(blackboard) == NodeStatus.RUNNING
+diff --git a/tests/test_bt_nodes.py b/tests/test_bt_nodes.py
+index 4528583..24c9faa 100644
+--- a/tests/test_bt_nodes.py
++++ b/tests/test_bt_nodes.py
+@@ -1,23 +1,7 @@
+-"""Tests for behavior tree composite nodes."""
++"""Tests for Selector, Parallel, Condition nodes."""
+ import pytest
+-from websec_test.engine.nodes import Node, NodeStatus, Blackboard, Sequence, Selector, SequentialGroup
+-from websec_test.engine.leaves import Action
+-
+-
+-# ΓöÇΓöÇ Helper actions for testing ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-
+-class CounterAction(Action):
+-    def __init__(self, name, returns, fail_after=None):
+-        super().__init__(name)
+-        self.returns = returns
+-        self.tick_count = 0
+-        self.fail_after = fail_after
+-
+-    def do_tick(self, blackboard):
+-        self.tick_count += 1
+-        if self.fail_after is not None and self.tick_count > self.fail_after:
+-            return NodeStatus.FAILURE
+-        return self.returns
++from websec_test.engine.nodes import Node, NodeStatus, Blackboard, Sequence, Selector, Parallel
++from websec_test.engine.leaves import Action, Condition
+ 
+ 
+ class SimpleAction(Action):
+@@ -25,113 +9,133 @@ class SimpleAction(Action):
+         super().__init__(name)
+         self.result = result
+         self.ticked = False
+-
+     def do_tick(self, blackboard):
+         self.ticked = True
+         return self.result
+ 
+ 
+-# ΓöÇΓöÇ Fixtures ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++class CounterAction(Action):
++    def __init__(self, name, returns=NodeStatus.SUCCESS):
++        super().__init__(name)
++        self.returns = returns
++        self.tick_count = 0
++    def do_tick(self, blackboard):
++        self.tick_count += 1
++        return self.returns
++
+ 
+ @pytest.fixture
+ def blackboard():
+     return Blackboard(client="mock_client", target="http://example.com")
+ 
+ 
+-# ΓöÇΓöÇ NodeStatus ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+-
+-def test_node_status_enum():
+-    assert NodeStatus.SUCCESS.value == "success"
+-    assert NodeStatus.FAILURE.value == "failure"
+-    assert NodeStatus.RUNNING.value == "running"
++# ΓöÇΓöÇ Selector ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ 
++def test_selector_first_success(blackboard):
++    a1 = SimpleAction("a1", NodeStatus.SUCCESS)
++    a2 = SimpleAction("a2", NodeStatus.FAILURE)
++    sel = Selector("sel", [a1, a2])
++    assert sel.tick(blackboard) == NodeStatus.SUCCESS
++    assert not a2.ticked
+ 
+-def test_node_abstract():
+-    with pytest.raises(TypeError):
+-        Node("abstract")
+ 
++def test_selector_first_running(blackboard):
++    a1 = SimpleAction("a1", NodeStatus.RUNNING)
++    a2 = SimpleAction("a2", NodeStatus.SUCCESS)
++    sel = Selector("sel", [a1, a2])
++    assert sel.tick(blackboard) == NodeStatus.RUNNING
++    assert not a2.ticked
+ 
+-# ΓöÇΓöÇ Blackboard ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ 
+-def test_blackboard_add_result(blackboard):
+-    blackboard.add_result("r1")
+-    blackboard.add_result("r2")
+-    assert blackboard.results == ["r1", "r2"]
++def test_selector_all_fail(blackboard):
++    sel = Selector("sel", [
++        SimpleAction("a1", NodeStatus.FAILURE),
++        SimpleAction("a2", NodeStatus.FAILURE),
++    ])
++    assert sel.tick(blackboard) == NodeStatus.FAILURE
+ 
+ 
+-def test_blackboard_get_set(blackboard):
+-    blackboard.set("key1", "val1")
+-    assert blackboard.get("key1") == "val1"
++def test_selector_empty(blackboard):
++    sel = Selector("empty", [])
++    assert sel.tick(blackboard) == NodeStatus.FAILURE
+ 
+ 
+-def test_blackboard_default(blackboard):
+-    assert blackboard.get("nonexistent") is None
+-    assert blackboard.get("nonexistent", 42) == 42
++def test_selector_second_succeeds(blackboard):
++    sel = Selector("sel", [
++        SimpleAction("a1", NodeStatus.FAILURE),
++        SimpleAction("a2", NodeStatus.SUCCESS),
++        SimpleAction("a3", NodeStatus.FAILURE),
++    ])
++    assert sel.tick(blackboard) == NodeStatus.SUCCESS
+ 
+ 
+-# ΓöÇΓöÇ Sequence ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++# ΓöÇΓöÇ Parallel ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ 
+-def test_sequence_all_success(blackboard):
+-    seq = Sequence("seq", [
++def test_parallel_all_success(blackboard):
++    p = Parallel("p", [
+         SimpleAction("a1", NodeStatus.SUCCESS),
+         SimpleAction("a2", NodeStatus.SUCCESS),
++    ], min_success=2)
++    assert p.tick(blackboard) == NodeStatus.SUCCESS
++
++
++def test_parallel_meets_threshold(blackboard):
++    p = Parallel("p", [
++        SimpleAction("a1", NodeStatus.SUCCESS),
++        SimpleAction("a2", NodeStatus.FAILURE),
+         SimpleAction("a3", NodeStatus.SUCCESS),
+-    ])
+-    assert seq.tick(blackboard) == NodeStatus.SUCCESS
++    ], min_success=2)
++    assert p.tick(blackboard) == NodeStatus.SUCCESS
+ 
+ 
+-def test_sequence_short_circuit(blackboard):
+-    a2 = SimpleAction("a2", NodeStatus.FAILURE)
+-    a3 = SimpleAction("a3", NodeStatus.SUCCESS)
+-    seq = Sequence("seq", [
++def test_parallel_below_threshold(blackboard):
++    p = Parallel("p", [
+         SimpleAction("a1", NodeStatus.SUCCESS),
++        SimpleAction("a2", NodeStatus.FAILURE),
++    ], min_success=2)
++    assert p.tick(blackboard) == NodeStatus.FAILURE
++
++
++def test_parallel_runs_all_children(blackboard):
++    a2 = CounterAction("a2", NodeStatus.FAILURE)
++    p = Parallel("p", [
++        CounterAction("a1", NodeStatus.SUCCESS),
+         a2,
+-        a3,
+-    ])
+-    assert seq.tick(blackboard) == NodeStatus.FAILURE
+-    assert not a3.ticked, "third child should not have ticked"
++    ], min_success=1)
++    assert p.tick(blackboard) == NodeStatus.SUCCESS
++    assert a2.tick_count == 1
+ 
+ 
+-def test_sequence_no_children(blackboard):
+-    seq = Sequence("empty", [])
+-    assert seq.tick(blackboard) == NodeStatus.SUCCESS
++def test_parallel_empty(blackboard):
++    p = Parallel("empty", [], min_success=0)
++    assert p.tick(blackboard) == NodeStatus.SUCCESS
+ 
+ 
+-# ΓöÇΓöÇ Selector ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++def test_parallel_default_min_success(blackboard):
++    p = Parallel("p", [
++        SimpleAction("a1", NodeStatus.SUCCESS),
++    ])
++    assert p.tick(blackboard) == NodeStatus.SUCCESS
+ 
+-def test_selector_first_success(blackboard):
+-    a1 = SimpleAction("a1", NodeStatus.SUCCESS)
+-    a2 = SimpleAction("a2", NodeStatus.FAILURE)
+-    sel = Selector("sel", [a1, a2])
+-    assert sel.tick(blackboard) == NodeStatus.SUCCESS
+-    assert not a2.ticked, "second child should not have ticked"
+ 
++# ΓöÇΓöÇ Condition ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ 
+-def test_selector_all_fail(blackboard):
+-    sel = Selector("sel", [
+-        SimpleAction("a1", NodeStatus.FAILURE),
+-        SimpleAction("a2", NodeStatus.FAILURE),
+-    ])
+-    assert sel.tick(blackboard) == NodeStatus.FAILURE
++def test_condition_true(blackboard):
++    cond = Condition("is_true", lambda bb: True)
++    assert cond.tick(blackboard) == NodeStatus.SUCCESS
+ 
+ 
+-# ΓöÇΓöÇ SequentialGroup ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++def test_condition_false(blackboard):
++    cond = Condition("is_false", lambda bb: False)
++    assert cond.tick(blackboard) == NodeStatus.FAILURE
+ 
+-def test_sequential_group_meets_threshold(blackboard):
+-    seq = SequentialGroup("seq", [
+-        SimpleAction("a1", NodeStatus.SUCCESS),
+-        SimpleAction("a2", NodeStatus.SUCCESS),
+-        SimpleAction("a3", NodeStatus.SUCCESS),
+-        SimpleAction("a4", NodeStatus.FAILURE),
+-    ], min_success=3)
+-    assert seq.tick(blackboard) == NodeStatus.SUCCESS
+ 
++def test_condition_receives_blackboard(blackboard):
++    blackboard.set("val", 42)
++    cond = Condition("check_bb", lambda bb: bb.get("val") == 42)
++    assert cond.tick(blackboard) == NodeStatus.SUCCESS
+ 
+-def test_sequential_group_fails_threshold(blackboard):
+-    seq = SequentialGroup("seq", [
+-        SimpleAction("a1", NodeStatus.SUCCESS),
+-        SimpleAction("a2", NodeStatus.SUCCESS),
+-        SimpleAction("a3", NodeStatus.FAILURE),
+-        SimpleAction("a4", NodeStatus.FAILURE),
+-    ], min_success=3)
+-    assert seq.tick(blackboard) == NodeStatus.FAILURE
++
++def test_condition_exception_returns_failure(blackboard):
++    cond = Condition("broken", lambda bb: 1 / 0)
++    assert cond.tick(blackboard) == NodeStatus.FAILURE
+diff --git a/websec_test/engine/__init__.py b/websec_test/engine/__init__.py
+index 48f8d83..4a6eac3 100644
+--- a/websec_test/engine/__init__.py
++++ b/websec_test/engine/__init__.py
+@@ -1,15 +1,11 @@
+-from .nodes import NodeStatus, Blackboard, Node, Sequence, Selector, SequentialGroup, Parallel
++from .nodes import NodeStatus, Blackboard, Node, Sequence, Selector, Parallel
+ from .leaves import Action, Condition
+-from .decorators import Retry, Timeout, Invert, Cooldown, Log
+-from .adapters import ModuleAdapter, CheckAdapter, DiscoverAction
+-from .builder import CheckSpec, CheckTreeBuilder
+-from .registry import check_registry, register
++from .decorators import Decorator, Retry, Timeout, Invert
++from .adapters import ModuleAdapter
+ 
+ __all__ = [
+-    "NodeStatus", "Blackboard", "Node", "Sequence", "Selector", "SequentialGroup", "Parallel",
++    "NodeStatus", "Blackboard", "Node", "Sequence", "Selector", "Parallel",
+     "Action", "Condition",
+-    "Retry", "Timeout", "Invert", "Cooldown", "Log",
+-    "ModuleAdapter", "CheckAdapter", "DiscoverAction",
+-    "CheckSpec", "CheckTreeBuilder",
+-    "check_registry", "register",
++    "Decorator", "Retry", "Timeout", "Invert",
++    "ModuleAdapter",
+ ]
+diff --git a/websec_test/engine/decorators.py b/websec_test/engine/decorators.py
+index 07dd3d6..2a3418e 100644
+--- a/websec_test/engine/decorators.py
++++ b/websec_test/engine/decorators.py
+@@ -1,39 +1,50 @@
+ import time
+-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
+-from .nodes import Node, NodeStatus, Blackboard
++import threading
++from .nodes import Node, NodeStatus
++
+ 
+ class Decorator(Node):
+     def __init__(self, name, child):
+         super().__init__(name)
+         self.child = child
++    def tick(self, blackboard):
++        return self.child.tick(blackboard)
++
+ 
+ class Retry(Decorator):
+-    def __init__(self, name, child, max_attempts=3, delay=0):
++    def __init__(self, name, child, max_retries=1, delay=0):
+         super().__init__(name, child)
+-        self.max_attempts = max_attempts
++        self.max_retries = max_retries
+         self.delay = delay
+     def tick(self, blackboard):
+-        for attempt in range(self.max_attempts):
++        for attempt in range(self.max_retries + 1):
+             status = self.child.tick(blackboard)
+             if status == NodeStatus.SUCCESS:
+                 return NodeStatus.SUCCESS
+-            if self.delay and attempt < self.max_attempts - 1:
++            if self.delay and attempt < self.max_retries:
+                 time.sleep(self.delay)
+         return NodeStatus.FAILURE
+ 
++
+ class Timeout(Decorator):
+-    def __init__(self, name, child, max_seconds=10):
++    def __init__(self, name, child, timeout=30):
+         super().__init__(name, child)
+-        self.max_seconds = max_seconds
+-        self._executor = ThreadPoolExecutor(max_workers=1)
++        self.timeout = timeout
+     def tick(self, blackboard):
+-        future = self._executor.submit(self.child.tick, blackboard)
+-        try:
+-            return future.result(timeout=self.max_seconds)
+-        except FuturesTimeout:
+-            return NodeStatus.FAILURE
+-    def __del__(self):
+-        self._executor.shutdown(wait=False)
++        result = [NodeStatus.FAILURE]
++        done = threading.Event()
++        def run():
++            try:
++                result[0] = self.child.tick(blackboard)
++            except Exception:
++                result[0] = NodeStatus.FAILURE
++            finally:
++                done.set()
++        t = threading.Thread(target=run, daemon=True)
++        t.start()
++        done.wait(self.timeout)
++        return result[0]
++
+ 
+ class Invert(Decorator):
+     def __init__(self, name, child):
+@@ -42,29 +53,6 @@ class Invert(Decorator):
+         status = self.child.tick(blackboard)
+         if status == NodeStatus.SUCCESS:
+             return NodeStatus.FAILURE
+-        elif status == NodeStatus.FAILURE:
++        if status == NodeStatus.FAILURE:
+             return NodeStatus.SUCCESS
+         return status
+-
+-class Cooldown(Decorator):
+-    def __init__(self, name, child, min_interval=0):
+-        super().__init__(name, child)
+-        self.min_interval = min_interval
+-        self._last_tick = 0
+-    def tick(self, blackboard):
+-        now = time.time()
+-        if now - self._last_tick < self.min_interval:
+-            return NodeStatus.SUCCESS
+-        self._last_tick = now
+-        return self.child.tick(blackboard)
+-
+-class Log(Decorator):
+-    def __init__(self, name, child, label=""):
+-        super().__init__(name, child)
+-        self.label = label or name
+-    def tick(self, blackboard):
+-        start = time.time()
+-        status = self.child.tick(blackboard)
+-        elapsed = time.time() - start
+-        print(f"[{self.label}] {status.value} ({elapsed:.3f}s)")
+-        return status
+diff --git a/websec_test/engine/leaves.py b/websec_test/engine/leaves.py
+index 4c47198..240d681 100644
+--- a/websec_test/engine/leaves.py
++++ b/websec_test/engine/leaves.py
+@@ -11,9 +11,10 @@ class Action(Node):
+         except Exception:
+             return NodeStatus.FAILURE
+ 
+-class Condition(Node):
+-    def __init__(self, name, predicate):
++
++class Condition(Action):
++    def __init__(self, name, fn):
+         super().__init__(name)
+-        self.predicate = predicate
+-    def tick(self, blackboard):
+-        return NodeStatus.SUCCESS if self.predicate(blackboard) else NodeStatus.FAILURE
++        self.fn = fn
++    def do_tick(self, blackboard):
++        return NodeStatus.SUCCESS if self.fn(blackboard) else NodeStatus.FAILURE
+diff --git a/websec_test/engine/nodes.py b/websec_test/engine/nodes.py
+index 6c7bed3..d0c8092 100644
+--- a/websec_test/engine/nodes.py
++++ b/websec_test/engine/nodes.py
+@@ -39,6 +39,7 @@ class Sequence(Node):
+                 return status
+         return NodeStatus.SUCCESS
+ 
++
+ class Selector(Node):
+     def __init__(self, name, children=None):
+         super().__init__(name)
+@@ -46,33 +47,20 @@ class Selector(Node):
+     def tick(self, blackboard):
+         for child in self.children:
+             status = child.tick(blackboard)
+-            if status == NodeStatus.SUCCESS:
+-                return NodeStatus.SUCCESS
++            if status != NodeStatus.FAILURE:
++                return status
+         return NodeStatus.FAILURE
+ 
+-class SequentialGroup(Node):
+-    """Run children sequentially, requiring a minimum number of successes.
+-
+-    Children are executed SEQUENTIALLY (not concurrently). The name reflects
+-    *semantic* grouping ΓÇö independent checks that don't depend on each other's
+-    results but run in the same thread.
+-
+-    ``min_success`` is the count of successful children required for the
+-    overall node to return SUCCESS. If fewer children succeed, returns FAILURE.
+-    """
+ 
++class Parallel(Node):
+     def __init__(self, name, children=None, min_success=1):
+         super().__init__(name)
+         self.children = children or []
+         self.min_success = min_success
+     def tick(self, blackboard):
+-        success_count = 0
++        successes = 0
+         for child in self.children:
+-            status = child.tick(blackboard)
+-            if status == NodeStatus.SUCCESS:
+-                success_count += 1
+-        return NodeStatus.SUCCESS if success_count >= self.min_success else NodeStatus.FAILURE
+-
++            if child.tick(blackboard) == NodeStatus.SUCCESS:
++                successes += 1
++        return NodeStatus.SUCCESS if successes >= self.min_success else NodeStatus.FAILURE
+ 
+-# Deprecated alias ΓÇö use SequentialGroup for new code
+-Parallel = SequentialGroup

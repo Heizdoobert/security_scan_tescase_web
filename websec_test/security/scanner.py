@@ -233,12 +233,6 @@ class SecurityScanner:
                         recommendation=rule["recommendation"],
                     ))
 
-    def has_critical(self, findings: List[Finding]) -> bool:
-        return any(f.severity == "critical" for f in findings)
-
-    def has_high(self, findings: List[Finding]) -> bool:
-        return any(f.severity == "high" for f in findings)
-
     @staticmethod
     def exit_code(findings: List[Finding]) -> int:
         """0 = clean, 1 = high findings, 2 = critical findings."""

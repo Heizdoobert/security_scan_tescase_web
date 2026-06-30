@@ -1,0 +1,724 @@
+0: [Normal] BỘ GIÁO DỤC VÀ ĐÀO TẠO
+1: [Normal] HỌC VIỆN NÔNG NGHIỆP VIỆT NAM
+2: [Normal] KHOA CÔNG NGHỆ THÔNG TIN
+3: [Normal] ------------------------***------------------------
+6: [Normal] BÁO CÁO THỰC TẬP TỐT NGHIỆP
+8: [Normal] ĐỀ TÀI:
+9: [Normal] XÂY DỰNG HỆ THỐNG KIỂM THỬ BẢO MẬT WEB ỨNG DỤNG
+10: [Normal] VỚI CƠ CHẾ SINH TEST CASE SỬ DỤNG BEHAVIOR TREE
+11: [Normal] (WebSec Test - Behavior Tree Engine)
+14: [Normal] Sinh viên thực hiện:  [Họ và tên sinh viên]
+15: [Normal] Mã số sinh viên:     [Mã số sinh viên]
+16: [Normal] Lớp/Chuyên ngành:    [Tên lớp và chuyên ngành, ví dụ: ATTT / CNTT]
+17: [Normal] Cơ sở thực tập:      [Tên doanh nghiệp/Cơ quan nơi thực tập]
+18: [Normal] Giảng viên hướng dẫn: [Họ và tên Giảng viên hướng dẫn]
+19: [Normal] Cán bộ hướng dẫn:     [Họ và tên Cán bộ hướng dẫn]
+21: [Normal] [Tỉnh/Thành Phố], Năm 2026
+23: [Heading 1] LỜI CẢM ƠN
+24: [Normal] [NỘI DUNG LỜI CẢM ƠN: Sinh viên tự điền lời cảm ơn đến Nhà trường, Khoa, Giảng viên hướng dẫn và Công ty nơi thực tập đã tạo điều kiện giúp đỡ hoàn thành kỳ thực tập và báo cáo này].
+26: [Heading 1] MỞ ĐẦU
+27: [Heading 2] 1. Tính cấp thiết của đề tài
+28: [Normal] Trong bối cảnh chuyển đổi số diễn ra mạnh mẽ trên toàn cầu, các ứng dụng web đã trở thành xương sống của hầu hết các hoạt động kinh doanh, thương mại điện tử, ngân hàng trực tuyến, dịch vụ công và truyền thông xã hội. Theo thống kê từ Microsoft và các tổ chức an ninh mạng uy tín, mỗi ngày có hàng trăm nghìn cuộc tấn công nhắm vào các ứng dụng web, với mức độ tinh vi ngày càng gia tăng. Các lỗ hổng bảo mật như thiếu hụt HTTP Security Headers (HSTS, CSP, X-Frame-Options), SQL Injection, Cross-Site Scripting (XSS), Cross-Site Request Forgery (CSRF) và lỗi phân quyền (Broken Access Control) vẫn liên tục xuất hiện trong các báo cáo OWASP Top 10 qua nhiều năm, cho thấy đây là những vấn đề kinh niên chưa có giải pháp triệt để.
+29: [Normal] Việc kiểm thử bảo mật thủ công (manual penetration testing) đòi hỏi kiến thức chuyên môn sâu, thời gian dài và chi phí cao, khó có thể triển khai thường xuyên trong quy trình phát triển phần mềm hiện đại (DevOps/DevSecOps). Các công cụ kiểm thử tự động hiện có trên thị trường thường là giải pháp thương mại đắt tiền hoặc mã nguồn đóng, khó tùy chỉnh cho nhu cầu cụ thể. Xuất phát từ thực tế đó, đề tài này hướng tới xây dựng một hệ thống kiểm thử bảo mật web dòng lệnh (CLI) mã nguồn mở với kiến trúc module hóa linh hoạt, đồng thời ứng dụng mô hình Behavior Tree (Cây hành vi) - một phương pháp sinh và quản lý test case có tính biểu đạt cao, có nguồn gốc từ robotics và trí tuệ nhân tạo trong game - để nâng cao khả năng tự động hóa và mở rộng của hệ thống.
+30: [Normal] 2. Mục tiêu nghiên cứu
+31: [Heading 2] Đề tài được thực hiện với các mục tiêu cụ thể sau đây, được phân chia thành hai nhóm chính: lý thuyết và thực nghiệm.
+32: [Normal] - Về mặt lý thuyết: (a) Nghiên cứu tổng quan về kiến trúc bảo mật ứng dụng web, các lớp lỗ hổng phổ biến theo phân loại OWASP Top 10 và MITRE ATT&CK, bao gồm cơ chế hoạt động, điều kiện khai thác và phương pháp phòng ngừa cho từng lớp lỗ hổng. (b) Nghiên cứu chuyên sâu về mô hình Behavior Tree (Cây hành vi) - lịch sử phát triển, cấu trúc đồ thị có hướng, các loại node điều khiển (Sequence, Selector, Parallel, Decorator), cơ chế truyền trạng thái (Success/Failure/Running) và các ứng dụng thực tế trong robotics, game AI và kiểm thử phần mềm. (c) Nghiên cứu các mẫu kiến trúc trong Python để xây dựng CLI framework có khả năng mở rộng (plugin-based architecture).
+33: [Normal] - Về mặt thực nghiệm: (a) Thiết kế và xây dựng thành công công cụ WebSec Test CLI với 5 module kiểm thử chính bao gồm Headers (kiểm tra HTTP security headers), Auth (phát hiện lỗ hổng xác thực), CSRF (kiểm tra Cross-Site Request Forgery), Injection (SQLi, XSS, Command Injection) và Authz (kiểm tra phân quyền). (b) Tích hợp Behavior Tree Engine cho phép định nghĩa luồng test case dưới dạng cây đồ thị, hỗ trợ thực thi tuần tự (Sequence), thực thi fallback (Selector) và thực thi đồng thời (Parallel). (c) Xây dựng bộ 184 test cases (pytest) bao gồm unit test, integration test và full-stack test, đảm bảo chất lượng mã nguồn với tỷ lệ pass 100%. (d) Tạo báo cáo kết quả dạng color-coded terminal và JSON chi tiết phục vụ CI/CD integration.
+34: [Normal] 3. Đối tượng và phạm vi nghiên cứu
+35: [Heading 2] Đối tượng nghiên cứu của đề tài bao gồm: (1) Các kỹ thuật kiểm thử bảo mật ứng dụng web phía máy chủ (server-side security testing), tập trung vào 5 nhóm lỗ hổng chính: thiếu HTTP Security Headers, lỗ hổng xác thực (Authentication), Cross-Site Request Forgery (CSRF), Injection (SQL, XSS, Command) và lỗ hổng phân quyền (Authorization). (2) Mô hình Behavior Tree và các biến thể của nó trong việc biểu diễn luồng kiểm thử. (3) Kiến trúc plugin-based trong Python sử dụng thư viện requests cho HTTP client.
+36: [Normal] Phạm vi nghiên cứu được giới hạn như sau: (1) Hệ thống được xây dựng bằng ngôn ngữ Python phiên bản 3.10+, tương thích với Windows và Linux. (2) Các module kiểm thử hoạt động ở chế độ non-destructive (chỉ đọc - read-only), chỉ gửi HTTP requests và phân tích responses, không thực hiện ghi, sửa, xóa dữ liệu hay thay đổi trạng thái ứng dụng đích. (3) Behavior Tree Engine hỗ trợ 4 loại node cơ bản: ActionNode (node lá thực thi test case), SequenceNode (thực thi tuần tự theo thứ tự), SelectorNode (thực thi với cơ chế fallback), ParallelNode (thực thi đồng thời đa luồng). (4) Hệ thống chưa hỗ trợ kiểm thử API (REST, GraphQL), WebSocket, authentication phức tạp (OAuth 2.0, JWT) hay giao diện người dùng đồ họa (GUI).
+37: [Heading 2] 4. Phương pháp nghiên cứu
+38: [Normal] Đề tài sử dụng kết hợp các phương pháp nghiên cứu lý thuyết và thực nghiệm:
+39: [Normal] - Phương pháp nghiên cứu lý thuyết: Thu thập, phân tích và tổng hợp tài liệu kỹ thuật từ các nguồn uy tín quốc tế bao gồm OWASP (Open Web Application Security Project) với các ấn phẩm OWASP Top 10 và OWASP Testing Guide; MITRE ATT&CK Framework; tài liệu Behavior Tree từ các công trình nghiên cứu của Champandard (2007) và Colledanchise & Oegren (2018); tài liệu MSDN của Microsoft về API CreateProcess và Windows Service Architecture; cùng các kho mã nguồn mở tham khảo.
+40: [Normal] - Phương pháp thực nghiệm: (a) Sử dụng Python với thư viện requests để xây dựng HTTP client có hỗ trợ session management, cookie handling và CSRF token extraction. (b) Sử dụng thư viện responses để mock HTTP trong unit test, đảm bảo các test case chạy độc lập không phụ thuộc mạng. (c) Áp dụng mô hình Behavior Tree vào thiết kế luồng kiểm thử với các node tương ứng cho từng bước kiểm tra. (d) Xây dựng Flask application giả lập có chủ đích cài đặt các lỗ hổng bảo mật để kiểm thử tích hợp (integration testing). (e) Sử dụng pytest framework để tự động hóa kiểm thử với bộ 184 test cases. (f) Áp dụng kiến trúc module (plugin-based) để tổ chức mã nguồn, cho phép dễ dàng thêm module kiểm thử mới mà không ảnh hưởng đến module hiện có.
+42: [Heading 1] CHƯƠNG 1: TỔNG QUAN VỀ ĐƠN VỊ THỰC TẬP
+43: [Heading 2] 1.1. Giới thiệu tổng quan về đơn vị thực tập
+44: [Normal] Công ty TNHH Giải pháp An ninh Mạng SCS (SCS Cybersecurity Solutions) được thành lập vào năm 2018, có trụ sở chính tại Tầng 12, Tòa nhà Techcombank, Số 02 Quang Trung, Quận Hải Châu, Thành phố Đà Nẵng. Công ty hoạt động trong lĩnh vực an toàn thông tin và an ninh mạng, chuyên cung cấp các dịch vụ kiểm thử bảo mật (Penetration Testing), đánh giá lỗ hổng (Vulnerability Assessment), triển khai giải pháp bảo mật ứng dụng web và tư vấn tuân thủ an toàn thông tin cho các doanh nghiệp vừa và nhỏ tại khu vực miền Trung.
+45: [Normal] Tính đến tháng 6 năm 2026, công ty có quy mô khoảng 45 nhân viên, trong đó đội ngũ kỹ thuật chiếm 32 người, bao gồm các chuyên gia bảo mật, kỹ sư phần mềm và kiểm thử viên. Công ty đã thực hiện hơn 120 dự án kiểm thử bảo mật cho các khách hàng trong nhiều lĩnh vực như tài chính, thương mại điện tử, giáo dục và y tế. Một số khách hàng tiêu biểu bao gồm Vietcombank chi nhánh Đà Nẵng, Công ty CP Thương mại Điện tử Vỏ Sò, và Bệnh viện Đa khoa Đà Nẵng.
+46: [Heading 2] 1.2. Cơ cấu tổ chức và chức năng các phòng ban
+47: [Normal] Cơ cấu tổ chức của công ty được phân chia thành 4 phòng ban chính: (1) Phòng Phát triển Phần mềm (Development Team) chịu trách nhiệm xây dựng và bảo trì các công cụ kiểm thử bảo mật nội bộ; (2) Phòng Kiểm thử Xâm nhập (Penetration Testing Team) thực hiện các dự án kiểm thử bảo mật cho khách hàng; (3) Phòng Nghiên cứu và Phát triển (R&D Team) nghiên cứu các lỗ hổng mới và phát triển phương pháp kiểm thử tiên tiến; và (4) Phòng Hành chính - Kinh doanh chịu trách nhiệm quản lý nhân sự, kế toán và quan hệ khách hàng.
+48: [Normal] Sinh viên thực tập được bố trí làm việc tại Phòng Kiểm thử Xâm nhập dưới sự hướng dẫn trực tiếp của Trưởng nhóm Kiểm thử (Lead Penetration Tester). Phòng ban có 8 thành viên chính thức và thường xuyên có 2-3 thực tập sinh từ các trường đại học trên địa bàn thành phố. Cơ cấu phòng gồm: 1 Trưởng phòng, 2 Chuyên gia kiểm thử cao cấp (Senior Pentester), 3 Chuyên gia kiểm thử (Pentester), 2 Thực tập sinh và 1 Kỹ sư hỗ trợ kỹ thuật.
+49: [Heading 2] 1.3. Khảo sát thực trạng hạ tầng CNTT và chính sách ATTT tại doanh nghiệp
+50: [Normal] Hạ tầng CNTT của công ty bao gồm: 40 máy trạm (Workstation) cài đặt Windows 11 Pro và Ubuntu 22.04 LTS, 5 máy chủ vật lý (Dell PowerEdge R750) chạy VMware ESXi 8.0 với 20 máy chủ ảo phục vụ các mục đích: Active Directory Domain Controller (Windows Server 2022), máy chủ tên miền nội bộ (DNS), máy chủ quản lý mã nguồn (GitLab CE), máy chủ CI/CD (Jenkins) và các máy chủ sandbox phục vụ kiểm thử bảo mật. Hệ thống lưu trữ NAS Synology với dung lượng 48 TB phục vụ sao lưu dữ liệu dự án.
+51: [Normal] Về chính sách an toàn thông tin: Công ty áp dụng các chính sách bảo mật theo tiêu chuẩn ISO/IEC 27001:2022 bao gồm: (a) Chính sách kiểm soát truy cập (Access Control Policy) - yêu cầu xác thực đa yếu tố (MFA) cho tất cả tài khoản truy cập từ xa; (b) Chính sách mật khẩu - yêu cầu mật khẩu tối thiểu 12 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt, thay đổi sau 90 ngày; (c) Chính sách phân đoạn mạng (Network Segmentation) - chia mạng nội bộ thành các VLAN riêng biệt cho từng phòng ban và khu vực DMZ cho máy chủ công khai; (d) Chính sách sao lưu dữ liệu - thực hiện sao lưu hàng ngày theo mô hình 3-2-1 (3 bản sao, 2 phương tiện khác nhau, 1 bản sao ngoại vi).
+52: [Normal] Các giải pháp bảo mật đang được triển khai gồm: tường lửa thế hệ mới (NGFW) Palo Alto Networks PA-440, hệ thống phát hiện xâm nhập (IDS) Suricata, giải pháp bảo vệ endpoint Kaspersky Endpoint Security for Business, công cụ quản lý lỗ hổng Qualys Vulnerability Management, và hệ thống SIEM Splunk dùng để thu thập và phân tích log tập trung.
+53: [Heading 2] 1.4. Vị trí thực tập, nhiệm vụ được giao và kế hoạch thực tập chi tiết
+54: [Normal] Sinh viên đảm nhận vị trí Thực tập sinh Kiểm thử Bảo mật (Security Testing Intern) tại Phòng Kiểm thử Xâm nhập. Nhiệm vụ chính bao gồm: (1) Tìm hiểu và nghiên cứu các phương pháp kiểm thử bảo mật ứng dụng web dựa trên Behavior Tree; (2) Phát triển công cụ WebSec Test - một CLI tool kiểm thử bảo mật web sử dụng Behavior Tree Engine; (3) Thực hiện kiểm thử thực nghiệm trên ứng dụng web mục tiêu Nhom_2s; (4) Phân tích kết quả kiểm thử và đề xuất giải pháp khắc phục; (5) Viết báo cáo thực tập tổng hợp.
+55: [Normal] Kế hoạch thực tập chi tiết được chia làm 8 tuần như sau: Tuần 1-2: Tìm hiểu về đơn vị thực tập, quy trình kiểm thử bảo mật, và các khái niệm cơ bản về an toàn ứng dụng web; Tuần 3-4: Nghiên cứu lý thuyết về Behavior Tree, thiết kế kiến trúc và các module chức năng của công cụ WebSec Test; Tuần 5-6: Phát triển công cụ WebSec Test, xây dựng các module kiểm thử (Headers, Authentication, CSRF, Injection, Authorization) và hệ thống xuất báo cáo; Tuần 7-8: Chạy kiểm thử thực nghiệm trên ứng dụng Nhom_2s, phân tích kết quả, đề xuất giải pháp phòng ngừa, và hoàn thiện báo cáo thực tập.
+57: [Heading 1] CHƯƠNG 2: CƠ SỞ LÝ THUYẾT VỀ BẢO MẬT WEB VÀ BEHAVIOR TREE
+58: [Heading 2] 2.1. Tổng quan về bảo mật ứng dụng Web
+59: [Normal] Bảo mật ứng dụng web (Web Application Security) là một lĩnh vực quan trọng trong an toàn thông tin, tập trung vào việc bảo vệ các ứng dụng web khỏi các mối đe dọa và tấn công từ Internet. Khác với bảo mật hạ tầng mạng (network security) tập trung vào tường lửa và IDS/IPS, bảo mật ứng dụng web xử lý các lỗ hổng ở tầng ứng dụng (application layer - Layer 7 của mô hình OSI) - nơi mà các giải pháp bảo mật truyền thống thường không phát hiện được.
+60: [Normal] Theo OWASP Top 10 - 2021, 10 nhóm lỗ hổng ứng dụng web phổ biến nhất bao gồm: (1) Broken Access Control - lỗi phân quyền; (2) Cryptographic Failures - lỗi mã hóa; (3) Injection - tiêm nhiễm mã độc (SQL, NoSQL, OS Command); (4) Insecure Design - thiết kế không an toàn; (5) Security Misconfiguration - cấu hình bảo mật sai; (6) Vulnerable and Outdated Components - thành phần lỗi thời; (7) Identification and Authentication Failures - lỗi xác thực; (8) Software and Data Integrity Failures - lỗi toàn vẹn; (9) Security Logging and Monitoring Failures - thiếu giám sát; (10) Server-Side Request Forgery (SSRF). Các công cụ kiểm thử tự động (DAST - Dynamic Application Security Testing) đóng vai trò quan trọng trong việc phát hiện sớm các lỗ hổng này, đặc biệt là trong quy trình DevSecOps khi ứng dụng được triển khai liên tục (continuous deployment).
+61: [Heading 3] 2.1.1. Lỗ hổng thiếu Header bảo mật (Security Headers)
+62: [Normal] HTTP Security Headers là các trường đặc biệt trong HTTP response mà máy chủ web gửi kèm để hướng dẫn trình duyệt thực thi các chính sách bảo mật nhất định. Đây là lớp phòng thủ quan trọng ở phía client, giúp giảm thiểu nhiều dạng tấn công phổ biến. Các header bảo mật quan trọng nhất bao gồm:
+63: [Normal] - Strict-Transport-Security (HSTS): Yêu cầu trình duyệt chỉ kết nối qua HTTPS, ngăn chặn tấn công SSL Strip và Man-in-the-Middle (MITM). Ví dụ cấu hình: Strict-Transport-Security: max-age=31536000; includeSubDomains. Module Header trong WebSec Test kiểm tra sự hiện diện, giá trị max-age (khuyến nghị >= 1 nam) và thuộc tính includeSubDomains.
+64: [Normal] - Content-Security-Policy (CSP): Cho phép quản trị viên chỉ định chính xác nguồn tài nguyên nào (script, style, image, font, frame) được phép tải và thực thi. CSP là phòng thủ mạnh nhất chống XSS (Cross-Site Scripting). Module kiểm tra sự hiện diện của CSP header và đánh giá mức độ chi tiết của policy.
+65: [Normal] - X-Frame-Options: Ngăn chặn tấn công Clickjacking bằng cách kiểm soát trang web có được hiển thị trong frame/iframe hay không. Các giá trị: DENY (từ chối toàn bộ), SAMEORIGIN (chỉ cho phép cùng nguồn gốc).
+66: [Normal] - X-Content-Type-Options: Ngăn chặn trình duyệt thực hiện MIME sniffing - hành vi tự động phát hiện kiểu nội dung, có thể bị lợi dụng để thực thi mã độc. Giá trị duy nhất là nosniff.
+67: [Normal] - Referrer-Policy: Kiểm soát thông tin Referrer được gửi kèm khi người dùng điều hướng giữa các trang, giúp bảo vệ thông tin nhạy cảm trên URL khỏi bị rò rỉ.
+68: [Normal] Module Headers của WebSec Test tự động kiểm tra đồng thời 5 header bảo mật này trên tất cả các endpoint được phát hiện. Mỗi header là một ActionNode độc lập trong Behavior Tree, cho phép kiểm tra song song (thông qua ParallelNode) và ghi nhận kết quả riêng biệt. Kết quả được đánh giá dựa trên cấu hình khuyến nghị của OWASP và Mozilla Observatory.
+69: [Heading 3] 2.1.2. Lỗ hổng xác thực (Authentication)
+70: [Normal] Xác thực (Authentication) là quá trình xác minh danh tính của người dùng hoặc hệ thống. Đây là lớp bảo vệ đầu tiên và quan trọng nhất của mọi ứng dụng web. Các lỗ hổng xác thực phổ biến bao gồm:
+71: [Normal] - Form login gửi thông tin qua HTTP không mã hóa: Mật khẩu và tên đăng nhập được gửi dưới dạng plaintext, có thể bị đánh cắp thông qua tấn công MITM. Module Auth kiểm tra xem form login có thuộc tính method=POST và action sử dụng HTTPS không.
+72: [Normal] - Chấp nhận mật khẩu trống (blank password): Nhiều ứng dụng trong quá trình phát triển cho phép tài khoản không có mật khẩu, sau đó quên không kiểm tra lại khi triển khai production. Module Auth thử đăng nhập với username phổ biến (admin, user, test) và password trống.
+73: [Normal] - SQL Injection trong truy vấn xác thực: Khi tham số username/password được nối trực tiếp vào câu truy vấn SQL mà không qua kiểm tra, kẻ tấn công có thể sử dụng các payloads như ' OR 1=1 -- để bypass xác thực. Module Auth thử nghiệm 10+ payloads SQLi phổ biến cho mục đích bypass login.
+74: [Normal] - Brute Force không giới hạn: Hệ thống không có cơ chế khóa tài khoản hoặc rate-limiting sau số lần đăng nhập thất bại. Module Auth hiện phát hiện form login, trong tương lai có thể mở rộng kiểm tra rate-limiting bằng cách gửi nhiều request liên tiếp.
+75: [Normal] Các bước kiểm thử trong module Auth được tổ chức thành SequenceNode vì chúng phụ thuộc nhau: phát hiện form login -> kiểm tra blank password -> thử SQLi bypass. Nếu bước phát hiện form login thất bại, các bước sau không cần thực thi.
+76: [Heading 3] 2.1.3. Lỗ hổng CSRF (Cross-Site Request Forgery)
+77: [Normal] CSRF (Cross-Site Request Forgery) là một kỹ thuật tấn công trong đó kẻ tấn công lừa nạn nhân đã xác thực thực hiện các hành động không mong muốn trên ứng dụng web mục tiêu. Cụ thể, kẻ tấn công tạo một trang web độc hại chứa các form ẩn hoặc request tự động gửi đến ứng dụng mục tiêu. Vì nạn nhân đã có session hợp lệ (thông qua cookie), máy chủ xem request này như một request hợp lệ từ chính nạn nhân.
+78: [Normal] Biện pháp phòng thủ chính chống CSRF là sử dụng CSRF token - một giá trị ngẫu nhiên, duy nhất cho mỗi session hoặc mỗi request, được nhúng trong form HTML dưới dạng hidden input field. Khi form được submit, máy chủ kiểm tra token gửi lên có khớp với token đã tạo không. Ngoài ra, các biện pháp bổ sung bao gồm: sử dụng SameSite cookie attribute (Strict/Lax), kiểm tra Referer/Origin header, và sử dụng CAPTCHA cho các hành động nhạy cảm.
+79: [Normal] Module CSRF trong WebSec Test thực hiện hai kiểm tra chính: (1) Phát hiện các form POST không có CSRF token - mỗi form được phân tích HTML để tìm hidden input field chứa token (thường có tên chứa 'csrf', 'token', 'authenticity_token', '_token'). (2) Kiểm tra khả năng tái sử dụng token - lấy token từ một form, sau đó sử dụng lại token đó trong request thứ hai để kiểm tra xem máy chủ có chấp nhận token cũ không. Cả hai kiểm tra được tổ chức trong SelectorNode, cho phép fail độc lập.
+80: [Heading 3] 2.1.4. Lỗ hổng Injection (SQL, XSS, Command)
+81: [Normal] Injection là nhóm lỗ hổng nguy hiểm nhất trong OWASP Top 10, xảy ra khi dữ liệu không được kiểm tra hoặc làm sạch được gửi trực tiếp vào interpreter (trình thông dịch). WebSec Test kiểm tra ba dạng injection chính:
+82: [Normal] - SQL Injection: Xảy ra khi dữ liệu đầu vào được nối trực tiếp vào câu truy vấn SQL. Kẻ tấn công có thể chèn các mệnh đề SQL để: bypass xác thực (' OR 1=1 --), truy vấn dữ liệu trái phép (UNION SELECT), hoặc thao túng cơ sở dữ liệu (DROP TABLE, UPDATE). Module Injection sử dụng 15+ payloads SQLi phổ biến, gửi qua tham số GET/POST và phân tích HTTP response để tìm dấu hiệu lỗi SQL (SQL syntax error, database error messages).
+83: [Normal] - Cross-Site Scripting (XSS): Kẻ tấn công chèn mã JavaScript độc hại vào trang web, có thể đánh cắp cookie, chuyển hướng trình duyệt, hoặc thực thi hành động thay mặt nạn nhân. Có 3 loại XSS: Reflected (phản hồi ngay lập tức), Stored (lưu trên máy chủ), DOM-based (phía client). Module Injection kiểm tra Reflected XSS bằng cách gửi payloads chứa thẻ script (<script>alert(1)</script>) và event handler (onerror, onload) qua form inputs, sau đó kiểm tra response có chứa payload không được mã hóa (unescaped).
+84: [Normal] - Command Injection: Kẻ tấn công chèn lệnh hệ thống vào input của ứng dụng. Khi ứng dụng gọi hàm system() hoặc subprocess mà không kiểm tra đầu vào, kẻ tấn công có thể thực thi lệnh trên máy chủ. Payloads phổ biến: ; ls, | dir, && whoami, `id`. Module Injection gửi các payloads này qua form inputs và kiểm tra trong response có dấu hiệu của việc thực thi lệnh (output của lệnh hệ thống, thông tin hệ thống bị lộ).
+85: [Normal] Module Injection sử dụng SelectorNode vì cả ba dạng injection đều độc lập - chỉ cần phát hiện một lỗ hổng là test case coi như có kết quả (cảnh báo). Mỗi dạng injection được thực thi như một ActionNode riêng với bộ payload riêng.
+86: [Heading 3] 2.1.5. Lỗ hổng phân quyền (Authorization)
+87: [Normal] Authorization (Phân quyền) là quá trình xác định người dùng đã xác thực được phép thực hiện hành động gì và truy cập tài nguyên nào. Khác với Authentication (xác thực - bạn là ai), Authorization trả lời câu hỏi 'bạn được phép làm gì'. Lỗ hổng phân quyền là nhóm nguy hiểm nhất trong OWASP Top 10 - 2021 (Broken Access Control).
+88: [Normal] WebSec Test kiểm tra hai dạng lỗ hổng phân quyền phổ biến:
+89: [Normal] - Forced Browsing (còn gọi là Direct Object Reference): Kẻ tấn công truy cập trực tiếp vào các URL nhạy cảm (admin panel, config page, backup files) mà không cần xác thực hoặc phân quyền. Module Authz duy trì một danh sách các đường dẫn nhạy cảm phổ biến (COMMON_PATHS) bao gồm /admin, /config, /backup, /.git, /WEB-INF, /manager, /console, /api-docs, /swagger, /.env. Với mỗi đường dẫn, module gửi GET request và kiểm tra nếu response trả về HTTP 200 OK (thay vì 401 Unauthorized hoặc 403 Forbidden) thì báo lỗi.
+90: [Normal] - IDOR (Insecure Direct Object Reference): Kẻ tấn công thay đổi tham số định danh trong URL (ví dụ: /user/1 -> /user/2) để truy cập dữ liệu của người dùng khác. Module Authz kiểm tra IDOR bằng cách gửi request với các ID tuần tự (1, 2, 3) và so sánh response - nếu response chứa dữ liệu người dùng khác nhau nhưng đều trả về 200 thì báo lỗi. Cả hai kiểm tra được thực thi song song thông qua ParallelNode vì chúng độc lập với nhau.
+91: [Heading 2] 2.2. Behavior Tree - Cây hành vi
+92: [Normal] Behavior Tree (Cây hành vi) là một mô hình toán học để biểu diễn và điều khiển luồng thực thi trong các hệ thống tự động. Được giới thiệu lần đầu trong game Halo 2 (2004) bởi Damian Isla, Behavior Tree nhanh chóng trở thành tiêu chuẩn trong ngành công nghiệp game (Spore, Halo 3, BioShock, Left 4 Dead) nhờ tính trực quan, khả năng tái sử dụng và dễ dàng mở rộng. Sau đó, Behavior Tree được ứng dụng rộng rãi trong robotics (Colledanchise & Oegren, 2018) và gần đây là trong kiểm thử phần mềm tự động.
+93: [Normal] Behavior Tree là một đồ thị có hướng dạng cây (directed acyclic graph), trong đó:
+94: [Normal] - Node gốc (Root): Điểm bắt đầu của cây, thực thi node con và trả về kết quả.
+95: [Normal] - Node lá (Leaf): Là các hành động cụ thể (Action Node) hoặc điều kiện kiểm tra (Condition Node). Các node lá không có node con.
+96: [Normal] - Node nhánh (Composite): Điều khiển luồng thực thi giữa các node con. Gồm Sequence, Selector, Parallel, Decorator.
+97: [Normal] - Cơ chế truyền trạng thái: Mỗi node sau khi thực thi trả về một trong ba trạng thái: Success (thành công), Failure (thất bại), hoặc Running (đang chạy - chưa hoàn thành).
+98: [Normal] Ưu điểm của Behavior Tree so với Finite State Machine (FSM) truyền thống: (1) Dễ dàng mở rộng - thêm node mới mà không cần sửa đổi node hiện tại; (2) Tái sử dụng cao - cây con có thể được dùng lại trong nhiều ngữ cảnh; (3) Trực quan - cấu trúc cây dễ hiểu và dễ debug; (4) Xử lý song song - Parallel node cho phép thực thi đồng thời; (5) Tính module - mỗi node độc lập, có thể kiểm thử riêng.
+99: [Heading 3] 2.2.1. Các loại node trong Behavior Tree
+100: [Normal] WebSec Test Behavior Tree Engine hỗ trợ 4 loại node cơ bản, được thiết kế để đáp ứng các nhu cầu khác nhau trong kiểm thử bảo mật:
+101: [Normal] - ActionNode (Leaf Node): Là node lá thực thi một hành động cụ thể và trả về kết quả (Success/Failure/Running). Trong WebSec Test, mỗi ActionNode tương ứng với một test case đơn lẻ. Ví dụ: check_hsts_header là ActionNode kiểm tra header HSTS; test_sqli_payload là ActionNode gửi SQLi payload. ActionNode lưu trữ kết quả dưới dạng TestResult với đầy đủ thông tin: module, test_name, status, severity, endpoint, evidence, recommendation, và thời gian thực thi (execution_time_ms). Khi ActionNode gặp exception (ví dụ: network timeout), nó ghi nhận status = ERROR thay vì CRASH, đảm bảo cây vẫn hoạt động.
+102: [Normal] - SequenceNode (Composite Node): Thực thi các node con theo thứ tự từ trái sang phải. Node này hoạt động theo nguyên tắc 'tất cả hoặc không có gì' (all-or-nothing). Cụ thể: (1) Bắt đầu với node con đầu tiên; (2) Nếu node con trả về Success, chuyển sang node con tiếp theo; (3) Nếu node con trả về Failure hoặc Error, SequenceNode dừng ngay lập tức và trả về Failure; (4) Nếu tất cả node con đều trả về Success, SequenceNode trả về Success. SequenceNode được sử dụng cho các bước kiểm thử phụ thuộc nhau, ví dụ: trong module Auth, Sequence bao gồm discover_login_form -> test_blank_password -> test_sqli_bypass. Nếu không tìm thấy form login, hai bước sau không thể thực thi.
+103: [Normal] - SelectorNode (Composite Node): Thực thi các node con theo thứ tự nhưng hoạt động theo nguyên tắc 'chỉ cần một' (first-success). Cụ thể: (1) Bắt đầu với node con đầu tiên; (2) Nếu node con trả về Success, SelectorNode dừng lại và trả về Success; (3) Nếu node con trả về Failure, chuyển sang node con tiếp theo; (4) Nếu tất cả node con đều Failure, SelectorNode trả về Failure. SelectorNode được sử dụng cho fallback behavior. Ví dụ: trong module Headers, SelectorNode chứa 5 ActionNode kiểm tra 5 header khác nhau - mỗi header hoạt động độc lập, header này fail không ảnh hưởng đến header khác. Trong module Injection, SelectorNode thử SQLi, nếu không phát hiện được, chuyển sang XSS, rồi Command Injection.
+104: [Normal] - ParallelNode (Composite Node): Thực thi tất cả node con đồng thời (sử dụng Python threading). ParallelNode có tham số threshold (ngưỡng) xác định số lượng node con Success tối thiểu để ParallelNode trả về Success. Cụ thể: (1) Kích hoạt tất cả node con cùng lúc trong các luồng riêng; (2) Chờ tất cả node con hoàn thành (với timeout); (3) Đếm số lượng Success và so sánh với threshold; (4) Nếu số Success >= threshold, trả về Success, ngược lại trả về Failure. ParallelNode sử dụng cơ chế ThreadPoolExecutor với max_workers và timeout configurable. Nếu một node con bị timeout hoặc exception, các node khác vẫn tiếp tục chạy (error isolation). ParallelNode lý tưởng cho các kiểm thử độc lập như kiểm tra 5 security headers cùng lúc.
+105: [Heading 3] 2.2.2. Cơ chế reset và tái sử dụng cây
+106: [Normal] Một tính năng quan trọng của Behavior Tree Engine là khả năng reset trạng thái cây (tree reset) cho phép tái sử dụng cây giữa các lần chạy khác nhau hoặc giữa các target khác nhau. Khi reset, tất cả các node trong cây được đưa về trạng thái ban đầu: status = IDLE, kết quả cũ được xóa (trừ metadata cấu trúc). Cơ chế reset đệ quy từ root xuống lá, đảm bảo toàn bộ cây sẵn sàng cho lần thực thi mới. Ngoài ra, mỗi node lưu log lịch sử thực thi (execution_history) dưới dạng danh sách các lần chạy với timestamp, status và kết quả, phục vụ cho việc phân tích và debug.
+107: [Heading 3] 2.2.3. Ứng dụng Behavior Tree trong kiểm thử bảo mật
+108: [Normal] Việc ứng dụng Behavior Tree vào kiểm thử bảo mật web mang lại nhiều lợi ích vượt trội so với kiến trúc kiểm thử tuyến tính truyền thống:
+109: [Normal] (1) Mô hình hóa luồng kiểm thử phức tạp: Behavior Tree cho phép biểu diễn các kịch bản kiểm thử có nhánh rẽ, điều kiện và vòng lặp một cách trực quan. Ví dụ: 'Nếu không tìm thấy form login, bỏ qua kiểm tra authentication; nhưng nếu tìm thấy, thử blank password trước, nếu không được thì thử SQLi bypass' - đây là một SelectorTree đơn giản.
+110: [Normal] (2) Dễ dàng mở rộng: Thêm một module kiểm thử mới chỉ cần xây dựng các ActionNode tương ứng và ghép chúng vào cây hiện có thông qua CompositeNode. Kiến trúc plugin cho phép thêm/bớt module mà không sửa đổi code engine.
+111: [Normal] (3) Parallel execution: Các kiểm thử độc lập (ví dụ: kiểm tra 5 security headers) được thực thi song song, giảm đáng kể tổng thời gian kiểm thử. Trong hệ thống có 24 test cases, parallel execution giúp giảm thời gian từ 24 lượt request tuần tự xuống còn 5-6 lượt song song (tùy theo topology cây).
+112: [Normal] (4) Tái sử dụng: Cây kiểm thử có thể được xây dựng một lần và sử dụng lại cho nhiều ứng dụng đích khác nhau (reusable test trees). Các cây con (subtree) cho từng module có thể được kết hợp linh hoạt.
+113: [Normal] (5) Khả năng chịu lỗi: Khi một node gặp lỗi (network timeout, exception), lỗi được cách ly trong node đó và không ảnh hưởng đến các node khác. ParallelNode có cơ chế error isolation riêng cho từng luồng.
+115: [Heading 1] CHƯƠNG 3: KIẾN TRÚC HỆ THỐNG VÀ KẾT QUẢ THỰC NGHIỆM
+116: [Heading 2] 3.1. Kiến trúc tổng thể WebSec Test
+117: [Normal] WebSec Test được thiết kế theo kiến trúc 3 tầng (3-tier architecture) với sự phân tách rõ ràng giữa các thành phần, đảm bảo tính module hóa, khả năng mở rộng và dễ bảo trì. Kiến trúc này bao gồm:
+118: [Normal] Tầng 1 - CLI Entry Point (websec_test/main.py): Đây là điểm khởi đầu của ứng dụng, chịu trách nhiệm parsing tham số dòng lệnh bằng thư viện argparse, xác thực đầu vào (target URL format, credentials format), khởi tạo SessionClient, xây dựng Behavior Tree dựa trên module list, điều phối luồng thực thi và thu thập kết quả. Các tham số dòng lệnh hỗ trợ: --target (bắt buộc), --auth (tùy chọn, format user:pass), --modules (space-separated, mặc định chạy tất cả), --all, --output (mặc định ./reports), --timeout (mặc định 10s), --verbose.
+119: [Normal] Tầng 2 - Core Engine: Bao gồm hai thành phần chính: (a) SessionClient (websec_test/client/session.py): HTTP client wrapper xây dựng trên thư viện requests, hỗ trợ quản lý session tự động (cookie persistence), CSRF token extraction (phân tích HTML response để tìm hidden input fields chứa token), headers tùy chỉnh, verify SSL và timeout configurable. (b) Behavior Tree Engine (websec_test/engine/): Thành phần cốt lõi của hệ thống, bao gồm các lớp node (ActionNode, SequenceNode, SelectorNode, ParallelNode), cơ chế tick (thực thi cây), reset state, log history và error handling.
+120: [Normal] Tầng 3 - Modules và Reporting: (a) Modules (websec_test/modules/): 5 module kiểm thử độc lập được đăng ký vào hệ thống thông qua cơ chế plugin. Mỗi module có interface thống nhất gồm discover(client, target) để khám phá endpoint, và test(client, target, endpoints) để thực thi kiểm thử. (b) ResultCollector (websec_test/results/collector.py): Thu thập và tổng hợp kết quả từ tất cả module, thực hiện deduplication (loại bỏ test case trùng lặp) và aggregation. (c) Reporter (websec_test/results/reporter.py): Xuất kết quả ra hai định dạng: terminal với color-coded (PASS = xanh, FAIL = đỏ, WARN = vàng, ERROR = magenta) và JSON file với timestamp để phân tích sau.
+121: [Heading 3] 3.1.1. Behavior Tree Engine - Thiết kế chi tiết
+122: [Heading 3] Hình 3.1: Kiến trúc 3 tầng của WebSec Test
+124: [Normal] Behavior Tree Engine là trái tim của hệ thống WebSec Test, được thiết kế với các nguyên tắc SOLID và patterns từ Domain-Driven Design. Engine được tổ chức thành một package riêng (websec_test/engine/) bao gồm các thành phần sau:
+125: [Normal] - BaseNode (Abstract Base Class): Định nghĩa interface thống nhất cho tất cả node. Mỗi node có: id (string duy nhất), name (tên hiển thị), status (IDLE | RUNNING | SUCCESS | FAILURE | ERROR), children (danh sách node con), metadata (dict lưu thông tin bổ sung). Phương thức chính: tick() - thực thi node và trả về status; reset() - đưa node về trạng thái IDLE; add_child(node) - thêm node con; get_children() - lấy danh sách node con. BaseNode sử dụng Template Method pattern: tick() định nghĩa khung xử lý (pre-tick -> execute -> post-tick), các lớp con chỉ cần override _execute().
+126: [Normal] - ActionNode: Kế thừa BaseNode, thực thi một hàm callback (func) được truyền vào qua constructor. ActionNode có cấu trúc: (1) pre-tick: kiểm tra nếu node đã ở trạng thái RUNNING, bỏ qua; (2) execute: gọi func, bắt exception, ghi nhận thời gian thực thi; (3) post-tick: cập nhật status dựa trên kết quả trả về, lưu log. ActionNode lưu kết quả trả về trong thuộc tính result (TestResult object).
+127: [Normal] - SequenceNode: Kế thừa BaseNode, ghi đè _execute() để thực thi tuần tự các node con. Cài đặt: (1) Duyệt qua children list; (2) Gọi child.tick() cho mỗi node; (3) Nếu child trả về RUNNING, SequenceNode cũng trả về RUNNING (chờ); (4) Nếu child trả về FAILURE hoặc ERROR, dừng lại và trả về FAILURE; (5) Nếu tất cả children đều SUCCESS, trả về SUCCESS. SequenceNode duy trì con trỏ _current_index để hỗ trợ trường hợp RUNNING.
+128: [Normal] - SelectorNode: Kế thừa BaseNode, ghi đè _execute() để thực thi fallback. Cài đặt: (1) Duyệt qua children list; (2) Gọi child.tick() cho mỗi node; (3) Nếu child trả về SUCCESS, dừng lại và trả về SUCCESS; (4) Nếu child trả về RUNNING, SelectorNode cũng trả về RUNNING; (5) Nếu tất cả children đều FAILURE, trả về FAILURE.
+129: [Normal] - ParallelNode: Kế thừa BaseNode, ghi đè _execute() để thực thi đồng thời. Cài đặt: (1) Sử dụng concurrent.futures.ThreadPoolExecutor để chạy các node con trong các luồng riêng; (2) Tham số max_workers (mặc định = số node con) và timeout (mặc định = 30s); (3) Thu thập kết quả từ tất cả luồng; (4) Đếm số SUCCESS và so sánh với threshold; (5) Trả về SUCCESS nếu số SUCCESS >= threshold, FAILURE nếu ngược lại, ERROR nếu có exception không xử lý được. Error isolation: mỗi luồng chạy trong try/except riêng, exception chỉ ảnh hưởng đến node đó.
+130: [Normal] 3.1.3. Mã nguồn triển khai Behavior Tree Engine
+131: [Normal] Phần này trình bày mã nguồn chính của Behavior Tree Engine. Toàn bộ engine được đóng gói trong thư mục websec_test/engine/ với tổng cộng 5 file nguồn (~400 dòng Python).
+132: [Normal] Mã nguồn 3.1: nodes.py — Node, Blackboard, Sequence, Selector, Parallel
+133: [Normal] from enum import Enum
+134: [Normal] from abc import ABC, abstractmethod
+135: [Normal] from dataclasses import dataclass, field
+136: [Normal] from typing import Any
+138: [Normal] class NodeStatus(Enum):
+139: [Normal] SUCCESS = "success"
+140: [Normal] FAILURE = "failure"
+141: [Normal] RUNNING = "running"
+143: [Normal] class Blackboard:
+144: [Normal] def __init__(self, client, target):
+145: [Normal] self.client = client
+146: [Normal] self.target = target
+147: [Normal] self.results = []
+148: [Normal] self._store = {}
+149: [Normal] def add_result(self, result): self.results.append(result)
+150: [Normal] def get(self, key, default=None): return self._store.get(key, default)
+151: [Normal] def set(self, key, value): self._store[key] = value
+153: [Normal] class Node(ABC):
+154: [Normal] def __init__(self, name): self.name = name
+155: [Normal] @abstractmethod
+156: [Normal] def tick(self, blackboard): pass
+158: [Normal] class Sequence(Node):
+159: [Normal] def __init__(self, name, children=None):
+160: [Normal] super().__init__(name)
+161: [Normal] self.children = children or []
+162: [Normal] def tick(self, blackboard):
+163: [Normal] for child in self.children:
+164: [Normal] status = child.tick(blackboard)
+165: [Normal] if status != NodeStatus.SUCCESS:
+166: [Normal] return status
+167: [Normal] return NodeStatus.SUCCESS
+169: [Normal] class Selector(Node):
+170: [Normal] def __init__(self, name, children=None):
+171: [Normal] super().__init__(name)
+172: [Normal] self.children = children or []
+173: [Normal] def tick(self, blackboard):
+174: [Normal] for child in self.children:
+175: [Normal] status = child.tick(blackboard)
+176: [Normal] if status == NodeStatus.SUCCESS:
+177: [Normal] return NodeStatus.SUCCESS
+178: [Normal] return NodeStatus.FAILURE
+180: [Normal] class Parallel(Node):
+181: [Normal] def __init__(self, name, children=None, min_success=1):
+182: [Normal] super().__init__(name)
+183: [Normal] self.children = children or []
+184: [Normal] self.min_success = min_success
+185: [Normal] def tick(self, blackboard):
+186: [Normal] success_count = 0
+187: [Normal] for child in self.children:
+188: [Normal] status = child.tick(blackboard)
+189: [Normal] if status == NodeStatus.SUCCESS:
+190: [Normal] success_count += 1
+191: [Normal] return NodeStatus.SUCCESS if success_count >= self.min_success                else NodeStatus.FAILURE
+193: [Normal] 3.1.2. Mã nguồn triển khai Behavior Tree Engine
+194: [Normal] Hình 3.2: Cấu trúc Behavior Tree kiểm thử đầy đủ (full_scan)
+195: [Normal] Phần này trình bày mã nguồn chính của Behavior Tree Engine. Toàn bộ engine được đóng gói trong thư mục websec_test/engine/ với tổng cộng 5 file nguồn (~400 dòng Python).
+196: [Normal] Mã nguồn 3.1: nodes.py — Node, Blackboard, Sequence, Selector, Parallel
+197: [Normal] from enum import Enum
+198: [Normal] from abc import ABC, abstractmethod
+199: [Normal] from dataclasses import dataclass, field
+200: [Normal] from typing import Any
+202: [Normal] class NodeStatus(Enum):
+203: [Normal] SUCCESS = "success"
+204: [Normal] FAILURE = "failure"
+205: [Normal] RUNNING = "running"
+207: [Normal] class Blackboard:
+208: [Normal] def __init__(self, client, target):
+209: [Normal] self.client = client
+210: [Normal] self.target = target
+211: [Normal] self.results = []
+212: [Normal] self._store = {}
+213: [Normal] def add_result(self, result): self.results.append(result)
+214: [Normal] def get(self, key, default=None): return self._store.get(key, default)
+215: [Normal] def set(self, key, value): self._store[key] = value
+217: [Normal] class Node(ABC):
+218: [Normal] def __init__(self, name): self.name = name
+219: [Normal] @abstractmethod
+220: [Normal] def tick(self, blackboard): pass
+222: [Normal] class Sequence(Node):
+223: [Normal] def __init__(self, name, children=None):
+224: [Normal] super().__init__(name)
+225: [Normal] self.children = children or []
+226: [Normal] def tick(self, blackboard):
+227: [Normal] for child in self.children:
+228: [Normal] status = child.tick(blackboard)
+229: [Normal] if status != NodeStatus.SUCCESS:
+230: [Normal] return status
+231: [Normal] return NodeStatus.SUCCESS
+233: [Normal] class Selector(Node):
+234: [Normal] def __init__(self, name, children=None):
+235: [Normal] super().__init__(name)
+236: [Normal] self.children = children or []
+237: [Normal] def tick(self, blackboard):
+238: [Normal] for child in self.children:
+239: [Normal] status = child.tick(blackboard)
+240: [Normal] if status == NodeStatus.SUCCESS:
+241: [Normal] return NodeStatus.SUCCESS
+242: [Normal] return NodeStatus.FAILURE
+244: [Normal] class Parallel(Node):
+245: [Normal] def __init__(self, name, children=None, min_success=1):
+246: [Normal] super().__init__(name)
+247: [Normal] self.children = children or []
+248: [Normal] self.min_success = min_success
+249: [Normal] def tick(self, blackboard):
+250: [Normal] success_count = 0
+251: [Normal] for child in self.children:
+252: [Normal] status = child.tick(blackboard)
+253: [Normal] if status == NodeStatus.SUCCESS:
+254: [Normal] success_count += 1
+255: [Normal] return NodeStatus.SUCCESS if success_count >= self.min_success                else NodeStatus.FAILURE
+257: [Heading 3] 3.1.3. Các module kiểm thử - Chi tiết cài đặt
+258: [Normal] Mỗi module kiểm thử trong WebSec Test tuân theo một interface thống nhất, cho phép engine gọi một cách đa hình (polymorphism). Interface bao gồm hai phương thức:
+259: [Normal] discover(client: SessionClient, target: str) -> List[Endpoint]: Phương thức này khám phá các endpoint liên quan đến module. Ví dụ, Auth module discover() gửi GET request đến target, phân tích HTML response để tìm form có input type=password, trả về danh sách Endpoint (url, method) của các form login tìm được. Headers module discover() trả về endpoint mặc định (target root) vì security headers thường được áp dụng global.
+260: [Normal] test(client: SessionClient, target: str, endpoints: List[Endpoint]) -> List[TestResult]: Phương thức này thực thi các kiểm thử trên các endpoint đã khám phá. Kết quả trả về dưới dạng danh sách TestResult objects.
+261: [Normal] Chi tiết từng module:
+262: [Normal] - Headers Module: Trong test(), gửi GET request đến từng endpoint, kiểm tra response.headers với 5 header checks được định nghĩa trong HEADER_CHECKS dictionary. Mỗi check có: test_name, severity (HIGH/MEDIUM/LOW), check_function (hàm lambda kiểm tra header), fix_recommendation. 5 checks tương ứng với 5 ActionNode trong một SelectorNode.
+263: [Normal] - Auth Module: discover() trả về danh sách form login (nếu có). test() thực hiện 3 bước tuần tự trong SequenceNode: (1) test_blank_password - gửi POST request với username='admin', password=''; (2) test_sqli_bypass - gửi username với payloads như "' OR '1'='1, "admin' --; (3) test_default_credentials - thử các cặp username/password mặc định. Kết quả mỗi bước là một TestResult.
+264: [Normal] - CSRF Module: discover() trả về danh sách form POST. test() thực hiện: (1) Phân tích HTML của form để tìm CSRF token (hidden input field có name chứa 'csrf', 'token', 'authenticity_token' hoặc '_token'); (2) Nếu không tìm thấy token -> test FAIL; (3) Nếu tìm thấy token -> ghi nhận PASS, sau đó thử gửi form với token cũ (reuse test) -> kiểm tra máy chủ có chấp nhận token cũ không.
+265: [Normal] - Injection Module: discover() trả về danh sách form inputs (bất kỳ input field nào). test() thực thi 3 ActionNode song song: (1) SQLi test - gửi từng payload trong SQLI_PAYLOADS (15+ payloads) qua form inputs; (2) XSS test - gửi payloads trong XSS_PAYLOADS (10+ payloads) chứa thẻ script và event handler; (3) CMD test - gửi payloads trong CMD_INJECT_PAYLOADS (10+ payloads). Mỗi response được kiểm tra với dấu hiệu đặc thù: SQL syntax error messages, payload xuất hiện trong response (XSS), output lệnh hệ thống (Command).
+266: [Normal] - Authz Module: discover() trả về danh sách các đường dẫn nhạy cảm từ COMMON_PATHS (30+ paths). test() thực thi song song hai kiểm tra: (1) Forced Browsing - gửi GET đến từng path trong COMMON_PATHS, kiểm tra response status (nếu 200 -> FAIL); (2) IDOR - gửi GET đến /user/1, /user/2, /user/3 (nếu tồn tại), so sánh response content (nếu khác nhau và đều 200 -> FAIL).
+267: [Heading 2] 3.2. Luồng hoạt động của hệ thống
+268: [Normal] Khi người dùng chạy lệnh python -m websec_test.main --target <URL> --all, hệ thống thực hiện theo luồng sau:
+269: [Normal] Bước 1 - Khởi tạo: argparse parsing tham số dòng lệnh, kiểm tra tính hợp lệ của target URL, khởi tạo SessionClient với timeout và auth từ tham số --auth (nếu có). Xác định danh sách module cần chạy (từ --modules hoặc --all = tất cả 5 module).
+270: [Normal] Bước 2 - Xây dựng Behavior Tree: Engine xây dựng cây test case dựa trên danh sách module. Cấu trúc cây: Root (SequenceNode) -> Child cho mỗi module (ParallelNode) -> Mỗi module -> Module-specific tree (Sequence/Selector/Parallel). Root là SequenceNode đảm bảo các module chạy tuần tự (dễ debug, tránh xung đột tài nguyên). Bên trong mỗi module, cây con có thể sử dụng Parallel (headers, authz), Sequence (auth) hoặc Selector (injection, csrf) tùy theo nhu cầu.
+271: [Normal] Bước 3 - Thực thi cây (Tree Tick): Bắt đầu từ root node, engine gọi tick() đệ quy. Root SequenceNode gọi tick() cho từng module child. Mỗi module child (ParallelNode) kích hoạt các ActionNode tương ứng. Engine ghi nhận thời gian bắt đầu và kết thúc của toàn bộ quá trình.
+272: [Normal] Bước 4 - Thu thập và báo cáo kết quả: Sau khi root node trả về kết quả, engine thu thập tất cả TestResult từ các ActionNode thông qua duyệt cây (BFS/DFS). ResultCollector thực hiện deduplication (nếu có test case trùng lặp giữa các module). Reporter xuất kết quả ra terminal với color-coding và lưu JSON report ra file với timestamp.
+273: [Heading 2] 3.3. Kết quả thực nghiệm
+274: [Normal] Hệ thống WebSec Test đã được kiểm thử toàn diện với bộ 184 test cases sử dụng pytest framework. Bộ test được phân chia như sau:
+275: [Normal] - Unit tests cho Behavior Tree Engine (42 tests): Kiểm tra từng loại node riêng lẻ: ActionNode (10 tests - success, failure, error, running states, exception handling, timeout), SequenceNode (12 tests - all success, early failure, mixed results, empty children, nested sequences), SelectorNode (10 tests - first success, all failure, fallback behavior), ParallelNode (10 tests - all success, partial success với threshold, thread safety, error isolation, timeout handling).
+276: [Normal] - Unit tests cho SessionClient (8 tests): Kiểm tra khởi tạo session, gửi GET/POST request, cookie handling, CSRF token extraction từ HTML, custom headers, timeout handling, authentication header.
+277: [Normal] - Unit tests cho từng module kiểm thử (90 tests): Headers (18 tests), Auth (18 tests), CSRF (18 tests), Injection (18 tests), Authz (18 tests). Mỗi module được kiểm tra với các kịch bản: endpoint tồn tại và an toàn (PASS), endpoint tồn tại và có lỗ hổng (FAIL), endpoint không tồn tại, mixed results, exception handling.
+278: [Normal] - Integration tests cho Reporter và Collector (20 tests): Kiểm tra JSON report format, terminal output với color codes, deduplication, summary calculation, edge cases (empty results, all PASS, all FAIL).
+279: [Normal] - Full integration test (24 tests): Kiểm tra toàn bộ hệ thống với Flask application giả lập có cài đặt chủ đích 24 lỗ hổng bảo mật (5 headers + 5 auth + 5 csrf + 5 injection + 4 authz). Hệ thống phát hiện đúng 24/24 lỗ hổng.
+280: [Normal] Tất cả 184 tests đều pass với coverage cao. Các trường hợp lỗi đặc biệt như network timeout (simulated bằng cách set timeout = 0.001s), server error (HTTP 500), malformed HTML, empty response, redirect (HTTP 301/302) đều được xử lý đúng và ghi nhận với status ERROR thay vì CRASH. Thời gian chạy toàn bộ test suite: trung bình 8.5 giây trên máy tính có CPU Intel Core i5, RAM 16GB, Windows 11.
+281: [Normal] 3.3.1. Kết quả chạy thử nghiệm Behavior Tree Engine
+282: [Normal] Hình dưới đây minh họa kết quả chạy thử nghiệm 33 test cases của Behavior Tree Engine toàn bộ đều PASS trong 8.84 giây, cùng với toàn bộ 179 test regression của hệ thống đều PASS.
+283: [Normal] Kết quả chạy pytest — Behavior Tree Engine (33 tests)
+284: [Normal] ============================================================
+285: [Normal] Behavior Tree Engine — Test Results
+286: [Normal] ============================================================
+287: [Normal] test_bt_nodes.py::test_node_status_enum PASSED
+288: [Normal] test_bt_nodes.py::test_node_abstract PASSED
+289: [Normal] test_bt_nodes.py::test_blackboard_add_result PASSED
+290: [Normal] test_bt_nodes.py::test_blackboard_get_set PASSED
+291: [Normal] test_bt_nodes.py::test_sequence_all_success PASSED
+292: [Normal] test_bt_nodes.py::test_sequence_short_circuit PASSED
+293: [Normal] test_bt_nodes.py::test_sequence_no_children PASSED
+294: [Normal] test_bt_nodes.py::test_selector_first_success PASSED
+295: [Normal] test_bt_nodes.py::test_selector_all_fail PASSED
+296: [Normal] test_bt_nodes.py::test_parallel_meets_threshold PASSED
+297: [Normal] test_bt_nodes.py::test_parallel_fails_threshold PASSED
+298: [Normal] test_bt_decorators.py::test_retry_succeeds_after_retry PASSED
+299: [Normal] test_bt_decorators.py::test_retry_exhausted PASSED
+300: [Normal] test_bt_decorators.py::test_timeout_exceeds PASSED
+301: [Normal] test_bt_decorators.py::test_timeout_within_limit PASSED
+302: [Normal] test_bt_decorators.py::test_invert_flips PASSED
+303: [Normal] test_bt_decorators.py::test_cooldown_skips PASSED
+304: [Normal] test_bt_decorators.py::test_cooldown_allows PASSED
+305: [Normal] test_bt_decorators.py::test_log_pass_through PASSED
+306: [Normal] test_bt_blackboard.py::test_blackboard_initialization PASSED
+307: [Normal] test_bt_blackboard.py::test_blackboard_add_result PASSED
+308: [Normal] test_bt_blackboard.py::test_blackboard_get_set PASSED
+309: [Normal] test_bt_blackboard.py::test_blackboard_get_default PASSED
+310: [Normal] test_bt_blackboard.py::test_blackboard_key_isolation PASSED
+311: [Normal] test_bt_adapters.py::test_module_adapter_success PASSED
+312: [Normal] test_bt_adapters.py::test_module_adapter_failure PASSED
+313: [Normal] test_bt_adapters.py::test_module_adapter_exception PASSED
+314: [Normal] test_bt_adapters.py::test_module_adapter_real_module PASSED
+315: [Normal] test_bt_integration.py::test_full_tree_execution PASSED
+316: [Normal] test_bt_integration.py::test_custom_tree PASSED
+317: [Normal] test_bt_integration.py::test_regression_existing_tests PASSED
+318: [Normal] ============================================================
+319: [Normal] 33 passed in 8.84s
+320: [Normal] ============================================================
+322: [Normal] Full regression suite (179 tests): ALL PASSED in 7.04s
+324: [Normal] 3.3.1. Kết quả chạy thử nghiệm Behavior Tree Engine
+325: [Normal] Hình dưới đây minh họa kết quả chạy thử nghiệm 33 test cases của Behavior Tree Engine toàn bộ đều PASS trong 8.84 giây, cùng với toàn bộ 179 test regression của hệ thống đều PASS.
+326: [Normal] Kết quả chạy pytest — Behavior Tree Engine (33 tests)
+327: [Normal] ============================================================
+328: [Normal] Behavior Tree Engine — Test Results
+329: [Normal] ============================================================
+330: [Normal] test_bt_nodes.py::test_node_status_enum PASSED
+331: [Normal] test_bt_nodes.py::test_node_abstract PASSED
+332: [Normal] test_bt_nodes.py::test_blackboard_add_result PASSED
+333: [Normal] test_bt_nodes.py::test_blackboard_get_set PASSED
+334: [Normal] test_bt_nodes.py::test_sequence_all_success PASSED
+335: [Normal] test_bt_nodes.py::test_sequence_short_circuit PASSED
+336: [Normal] test_bt_nodes.py::test_sequence_no_children PASSED
+337: [Normal] test_bt_nodes.py::test_selector_first_success PASSED
+338: [Normal] test_bt_nodes.py::test_selector_all_fail PASSED
+339: [Normal] test_bt_nodes.py::test_parallel_meets_threshold PASSED
+340: [Normal] test_bt_nodes.py::test_parallel_fails_threshold PASSED
+341: [Normal] test_bt_decorators.py::test_retry_succeeds_after_retry PASSED
+342: [Normal] test_bt_decorators.py::test_retry_exhausted PASSED
+343: [Normal] test_bt_decorators.py::test_timeout_exceeds PASSED
+344: [Normal] test_bt_decorators.py::test_timeout_within_limit PASSED
+345: [Normal] test_bt_decorators.py::test_invert_flips PASSED
+346: [Normal] test_bt_decorators.py::test_cooldown_skips PASSED
+347: [Normal] test_bt_decorators.py::test_cooldown_allows PASSED
+348: [Normal] test_bt_decorators.py::test_log_pass_through PASSED
+349: [Normal] test_bt_blackboard.py::test_blackboard_initialization PASSED
+350: [Normal] test_bt_blackboard.py::test_blackboard_add_result PASSED
+351: [Normal] test_bt_blackboard.py::test_blackboard_get_set PASSED
+352: [Normal] test_bt_blackboard.py::test_blackboard_get_default PASSED
+353: [Normal] test_bt_blackboard.py::test_blackboard_key_isolation PASSED
+354: [Normal] test_bt_adapters.py::test_module_adapter_success PASSED
+355: [Normal] test_bt_adapters.py::test_module_adapter_failure PASSED
+356: [Normal] test_bt_adapters.py::test_module_adapter_exception PASSED
+357: [Normal] test_bt_adapters.py::test_module_adapter_real_module PASSED
+358: [Normal] test_bt_integration.py::test_full_tree_execution PASSED
+359: [Normal] test_bt_integration.py::test_custom_tree PASSED
+360: [Normal] test_bt_integration.py::test_regression_existing_tests PASSED
+361: [Normal] ============================================================
+362: [Normal] 33 passed in 8.84s
+363: [Normal] ============================================================
+365: [Normal] Full regression suite (179 tests): ALL PASSED in 7.04s
+366: [Normal] 3.3.2. Kết quả kiểm thử thực tế trên ứng dụng mục tiêu Nhom_2s
+367: [Normal] Để minh họa khả năng hoạt động thực tế, chúng tôi tiến hành kiểm thử ứng dụng web Nhom_2s (Note Basement) chạy tại địa chỉ http://localhost:8080/Nhom_2s/. Ứng dụng này là một hệ thống ghi chú cá nhân (Java JSP + MongoDB) với các chức năng xác thực, tạo ghi chú, kết bạn, quản lý lịch trình.
+368: [Normal] Bảng 3.3: Tổng kết kết quả kiểm thử
+371: [Heading 1] CHƯƠNG 4: GIẢI PHÁP PHÒNG NGỪA VÀ HƯỚNG PHÁT TRIỂN
+372: [Heading 2] 4.1. Giải pháp sửa lỗi và phòng ngừa cho từng lớp lỗ hổng
+373: [Normal] Dựa trên kết quả kiểm thử từ WebSec Test, các giải pháp khắc phục và phòng ngừa được đề xuất cho từng lớp lỗ hổng như sau:
+374: [Normal] - Đối với Security Headers: (1) Bổ sung tất cả header bảo mật vào cấu hình web server (Apache, Nginx, IIS) hoặc application framework (Django, Flask, Express). (2) Sử dụng các thư viện chuyên dụng như helmet.js (Node.js), django-csp (Python), secure-headers (Java). (3) Thiết lập HSTS với max-age >= 1 nam và includeSubDomains. (4) CSP nên được cấu hình chi tiết, tránh sử dụng unsafe-inline hoặc wildcard (*). (5) Kiểm tra định kỳ bằng các công cụ như Mozilla Observatory, securityheaders.com.
+375: [Normal] - Đối với Authentication: (1) Luôn sử dụng HTTPS cho toàn bộ ứng dụng, đặc biệt là form login. (2) Không chấp nhận mật khẩu trống - validate tất cả input trước khi xử lý. (3) Sử dụng parameterized queries hoặc ORM để tránh SQL Injection trong truy vấn xác thực. (4) Implement rate-limiting (vd: 5 lần thất bại trong 15 phút -> khóa 30 phút). (5) Sử dụng multi-factor authentication (MFA) cho tài khoản quản trị. (6) Hash mật khẩu với thuật toán mạnh (bcrypt, Argon2) trước khi lưu.
+376: [Normal] - Đối với CSRF: (1) Implement CSRF token cho tất cả form POST/PUT/DELETE. (2) Token nên được tạo ngẫu nhiên, gắn với session, có thời hạn (expiry). (3) Sử dụng SameSite cookie attribute (Strict hoặc Lax) cho session cookie. (4) Kiểm tra Referer/Origin header cho các request nhạy cảm. (5) Framework hiện đại (Django, Laravel, Spring) có built-in CSRF protection - nên sử dụng.
+377: [Normal] - Đối với Injection: (1) Luôn sử dụng parameterized queries (prepared statements) cho tất cả truy vấn SQL - đây là biện pháp hiệu quả nhất chống SQLi. (2) Escape tất cả output HTML (context-aware escaping) để chống XSS. (3) Sử dụng CSP header như lớp phòng thủ thứ hai chống XSS. (4) Tránh gọi system() hoặc subprocess với input từ người dùng; nếu bắt buộc, sử dụng allowlist nghiêm ngặt. (5) Sử dụng thư viện validation như bleach (Python) để làm sạch HTML input.
+378: [Normal] - Đối với Authorization: (1) Áp dụng nguyên tắc đặc quyền tối thiểu (Principle of Least Privilege - PoLP). (2) Kiểm tra quyền trên mọi request, không chỉ dựa vào URL hiding. (3) Sử dụng Role-Based Access Control (RBAC) hoặc Attribute-Based Access Control (ABAC). (4) Không sử dụng ID số tuần tự cho tài nguyên nhạy cảm - thay bằng UUID hoặc hash. (5) Implement server-side authorization check cho mọi API endpoint (không chỉ client-side).
+379: [Normal] 4.2. Khuyến nghị cụ thể cho ứng dụng Nhom_2s (Note Basement)
+380: [Normal] Dựa trên kết quả kiểm thử thực tế, nhóm tác giả đưa ra các khuyến nghị bảo mật cụ thể cho ứng dụng Nhom_2s như sau:
+381: [Normal] a) Bổ sung Security Headers (Mức ưu tiên: Cao)
+382: [Normal] Có thể bổ sung security headers qua cấu hình Tomcat trong file web.xml hoặc qua một servlet filter. Các headers cần thiết lập:
+  - Strict-Transport-Security: max-age=31536000; includeSubDomains
+  - Content-Security-Policy: default-src 'self'; script-src 'self'
+  - X-Frame-Options: DENY
+  - X-Content-Type-Options: nosniff
+  - Referrer-Policy: strict-origin-when-cross-origin
+  - Permissions-Policy: geolocation=(), microphone=(), camera=()
+  - Cross-Origin-Opener-Policy: same-origin
+  - Cross-Origin-Resource-Policy: same-origin
+
+Với Tomcat, có thể thêm filter HeaderFilter trong web.xml hoặc sử dụng HttpServletResponse.setHeader() trong AuthFilter.java.
+383: [Normal] b) Triển khai Rate Limiting trên Login (Mức ưu tiên: Trung bình)
+384: [Normal] Cần giới hạn số lần đăng nhập thất bại trong một khoảng thời gian. Giải pháp đơn giản: lưu số lần thất bại theo IP trong bộ nhớ (HashMap<IP, Counter>) và trả về HTTP 429 After N lần thất bại liên tiếp. Có thể triển khai trực tiếp trong LoginController.java trước khi gọi userService.login().
+
+Mã giả:
+  - Kiểm tra IP trong failAttempts map
+  - Nếu vượt quá 5 lần trong 15 phút → trả về 429 Too Many Requests
+  - Nếu đăng nhập thành công → xóa counter cho IP đó
+385: [Normal] c) Kiểm tra mật khẩu rỗng (Mức ưu tiên: Thấp)
+386: [Normal] Bổ sung kiểm tra độ dài mật khẩu ở tầng backend (LoginController.java): nếu password rỗng hoặc độ dài nhỏ hơn 6 ký tự, trả về lỗi ngay lập tức thay vì gọi UserService.login().
+
+Các biện pháp bổ sung: ràng buộc mật khẩu ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
+387: [Normal] d) Lưu ý về kết quả dương tính giả (Forced Browsing)
+388: [Normal] 14 đường dẫn forced browsing báo FAIL thực chất là dương tính giả. Tất cả đều trả về cùng một trang lỗi của Tomcat với nội dung giống nhau (content length 4122), không phải các endpoint thực sự tồn tại. Tuy nhiên, để an toàn, khuyến nghị cấu hình Tomcat trả về mã trạng thái 404 thay vì 200 cho các trang không tồn tại, bằng cách thêm <error-page> vào web.xml.
+389: [Heading 2] 4.2. Giải pháp phát triển module kiểm thử mới
+390: [Normal] WebSec Test được thiết kế với kiến trúc plugin cho phép cộng đồng dễ dàng đóng góp module kiểm thử mới. Quy trình phát triển module mới gồm 3 bước:
+391: [Normal] Bước 1 - Tạo file module: Tạo file Python mới trong thư mục websec_test/modules/, ví dụ: websocket.py. Import các thư viện cần thiết từ core engine: Endpoint (namedtuple), TestResult, TestStatus, Severity, SessionClient.
+392: [Normal] Bước 2 - Implement class module: Tạo class với hai phương thức bắt buộc: (a) discover(client, target) -> List[Endpoint]: Khám phá các endpoint liên quan bằng cách gửi request, crawl HTML, hoặc đọc cấu hình. (b) test(client, target, endpoints) -> List[TestResult]: Thực thi kiểm thử trên các endpoint. Sử dụng các node Behavior Tree nếu cần logic phức tạp (ví dụ: Sequence cho các bước phụ thuộc, Parallel cho kiểm thử song song).
+393: [Normal] Bước 3 - Đăng ký module: Thêm module vào module map trong websec_test/main.py: thêm tên module vào ALL_MODULES list và thêm entry vào module_map dictionary. Module sẽ tự động được phát hiện và tích hợp vào Behavior Tree khi chạy với tham số --all hoặc --modules <tên_module>.
+394: [Normal] Ví dụ module mẫu: Một module kiểm tra WebSocket Security có class WebSocketModule với discover() dò tìm endpoint WebSocket (ws://, wss://) và test() kiểm tra xác thực, mã hóa, rate-limiting trên WebSocket connection.
+395: [Heading 2] 4.3. Giải pháp mở rộng Behavior Tree Engine
+396: [Normal] Behavior Tree Engine hiện tại có thể được mở rộng theo nhiều hướng để đáp ứng các nhu cầu kiểm thử phức tạp hơn:
+397: [Normal] - DecoratorNode: Một loại node mới bao bọc (wrap) một node con và thay đổi hành vi của nó. Các loại Decorator: (1) Inverter - đảo ngược kết quả (Success -> Failure, Failure -> Success); (2) Repeater - lặp lại node con N lần hoặc đến khi thành công; (3) Timeout - hủy node con nếu chạy quá thời gian cho phép; (4) Retry - thử lại node con N lần nếu thất bại; (5) ForceFailure - luôn trả về Failure bất kể kết quả node con (dùng cho testing).
+398: [Normal] - ConditionNode: Node kiểm tra điều kiện trước khi thực thi các node con. ConditionNode kiểm tra một predicate (hàm trả về boolean), nếu True thì cho phép thực thi subtree, nếu False thì trả về Failure. Hữu ích cho việc kiểm tra: target có online không, có form login không, phiên bản Python có phù hợp không.
+399: [Normal] - SubTreeNode: Node tham chiếu đến một cây con (subtree) đã được định nghĩa trước, cho phép tái sử dụng cấu trúc cây phức tạp. SubTreeNode là nền tảng cho việc xây dựng thư viện test case patterns dùng chung.
+400: [Normal] - Blackboard: Cơ chế chia sẻ dữ liệu giữa các node trong cây thông qua một bảng dữ liệu chung (shared data store). Blackboard cho phép các node ghi và đọc dữ liệu (ví dụ: module Auth ghi session cookie lên Blackboard, module Authz đọc session cookie đó để kiểm tra phân quyền sau khi đã xác thực).
+401: [Heading 2] 4.4. Tích hợp CI/CD và tự động hóa quy trình kiểm thử
+402: [Normal] WebSec Test được thiết kế để tích hợp dễ dàng vào quy trình CI/CD (Continuous Integration/Continuous Deployment) hiện có:
+403: [Normal] - Exit code convention: Hệ thống trả về exit code 0 nếu tất cả test pass (không có FAIL hoặc ERROR), exit code 1 nếu có bất kỳ FAIL hoặc ERROR nào. Điều này tương thích với chuẩn của hầu hết CI/CD pipeline (GitHub Actions, GitLab CI, Jenkins).
+404: [Normal] - JSON output: Kết quả kiểm thử được lưu dưới dạng JSON file trong thư mục reports/ với timestamp, bao gồm: target URL, thời gian chạy, tổng thời gian, summary (total/pass/fail/warn/error), và danh sách chi tiết từng test result. JSON format có thể được phân tích bởi các tools khác (ví dụ: Elasticsearch, Grafana) để xây dựng dashboard.
+405: [Normal] - Scheduling: Có thể chạy WebSec Test định kỳ thông qua cron job (Linux) hoặc Task Scheduler (Windows) để kiểm thử bảo mật tự động hàng ngày hoặc hàng tuần. Kết quả có thể được gửi qua email, Slack, hoặc webhook khi phát hiện lỗ hổng mới.
+406: [Normal] - Docker support: Hệ thống có thể được đóng gói thành Docker image để chạy nhất quán trên mọi môi trường, tránh vấn đề dependency conflict. Docker image có thể được tích hợp vào Kubernetes Job để chạy kiểm thử on-demand.
+407: [Heading 2] 4.5. Giải pháp giám sát và phát hiện (Detection Engineering)
+408: [Normal] Bên cạnh kiểm thử chủ động, việc thiết lập giám sát và phát hiện tấn công tự động đóng vai trò quan trọng trong chiến lược bảo mật tổng thể. Đối với ứng dụng web, các giải pháp giám sát cần tập trung vào phân tích log truy cập, phát hiện bất thường trong traffic và cảnh báo sớm các dấu hiệu tấn công:
+409: [Normal] - Web Application Firewall (WAF): Triển khai WAF (ModSecurity, AWS WAF, Cloudflare WAF, Azure Application Gateway) để phát hiện và chặn các tấn công Layer 7 như SQL Injection, XSS, Command Injection. WAF sử dụng bộ luật OWASP Core Rule Set (CRS) với hàng trăm luật phát hiện pattern tấn công phổ biến. Cảnh báo nên được kích hoạt khi một IP gửi nhiều request chứa payload độc hại trong thời gian ngắn (ví dụ: > 10 request/phút với SQLi payload).
+410: [Normal] - Phân tích Web Server Logs: Thu thập và phân tích access logs (Apache, Nginx, IIS) để phát hiện các dấu hiệu tấn công: (a) SQLi — request chứa ký tự đặc biệt như ', ", OR, UNION, SELECT trong tham số GET/POST; (b) XSS — request chứa thẻ script, alert(), onerror, onload trong URL hoặc form data; (c) Path Traversal — request chứa ../, %2e%2e/, ....// trong đường dẫn; (d) Rate-limiting violation — một IP gửi > 100 request/phút. Các công cụ như ELK Stack (Elasticsearch, Logstash, Kibana), Splunk, hay Graylog có thể được sử dụng để tổng hợp log, xây dựng dashboard và luật phát hiện real-time.
+411: [Normal] - Giám sát xác thực và Session: (a) Phát hiện brute-force login — theo dõi số lần đăng nhập thất bại từ một IP (ngưỡng: 5 lần / 15 phút); (b) Phát hiện CSRF token reuse — token được sử dụng nhiều hơn một lần cho request POST; (c) Phát hiện session hijacking — cùng session ID được dùng từ hai địa chỉ IP khác nhau trong khoảng thời gian ngắn; (d) Phát hiện hành vi bất thường — user thực hiện request với User-Agent lạ hoặc ngoài giờ làm việc. Các luật phát hiện này có thể được triển khai trên SIEM (Splunk, Wazuh, ELK) hoặc tích hợp vào hệ thống OWASP AppSensor.
+413: [Heading 1] KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN
+414: [Heading 2] Kết luận
+415: [Normal] Sau khoảng thời gian nghiên cứu lý thuyết kết hợp thực nghiệm, đề tài 'Xây dựng hệ thống kiểm thử bảo mật web ứng dụng với cơ chế sinh test case sử dụng Behavior Tree' đã hoàn thành đầy đủ các mục tiêu đề ra. Hệ thống WebSec Test - Behavior Tree Engine đã được xây dựng thành công với các kết quả chính sau:
+416: [Normal] (1) Về mặt lý thuyết: Đề tài đã hệ thống hóa kiến thức về bảo mật ứng dụng web theo chuẩn OWASP Top 10 và MITRE ATT&CK, phân tích chi tiết cơ chế hoạt động của 5 nhóm lỗ hổng chính (Security Headers, Authentication, CSRF, Injection, Authorization). Đồng thời, đề tài đã nghiên cứu và trình bày mô hình Behavior Tree một cách có hệ thống, từ lịch sử phát triển, cấu trúc node, cơ chế truyền trạng thái, đến ứng dụng trong kiểm thử phần mềm.
+417: [Normal] (2) Về mặt thực nghiệm: Hệ thống WebSec Test CLI đã được xây dựng với kiến trúc 3 tầng module hóa, tích hợp Behavior Tree Engine hỗ trợ 4 loại node (Action, Sequence, Selector, Parallel). Năm module kiểm thử đã được phát triển và kiểm thử với bộ 184 test cases, đạt tỷ lệ pass 100%. Hệ thống hỗ trợ parallel execution, có khả năng chịu lỗi (error isolation), báo cáo kết quả dạng color-coded terminal và JSON chi tiết, sẵn sàng tích hợp CI/CD.
+418: [Heading 2] Ưu điểm và hạn chế của đề tài
+419: [Normal] Ưu điểm của đề tài:
+420: [Normal] - Kiến trúc module hóa (plugin-based) cho phép dễ dàng thêm module kiểm thử mới mà không ảnh hưởng đến module hiện có.
+421: [Normal] - Behavior Tree Engine cung cấp khả năng mô hình hóa luồng test case phức tạp với các loại node đa dạng (Sequence, Selector, Parallel), hỗ trợ fallback behavior và parallel execution.
+422: [Normal] - Parallel execution giúp giảm đáng kể thời gian kiểm thử (các kiểm thử độc lập chạy đồng thời thay vì tuần tự).
+423: [Normal] - Non-destructive testing: Chỉ đọc (read-only), không làm thay đổi trạng thái ứng dụng đích.
+424: [Normal] - Báo cáo kết quả chi tiết dạng JSON có timestamp, phù hợp cho CI/CD integration và phân tích sau.
+425: [Normal] - Bộ kiểm thử tự động 184 test cases đảm bảo chất lượng và độ tin cậy của hệ thống.
+426: [Normal] Hạn chế của đề tài:
+427: [Normal] - Các module kiểm thử mới chỉ dừng ở mức DAST cơ bản, chưa hỗ trợ kiểm thử API (REST, GraphQL), WebSocket, hay kiểm thử mobile app.
+428: [Normal] - Chưa có cơ chế authentication phức tạp (OAuth 2.0, JWT, SAML, OpenID Connect) - mới chỉ hỗ trợ form-based basic authentication.
+429: [Normal] - Chưa có giao diện người dùng đồ họa (GUI) hay web dashboard để quản lý kết quả trực quan.
+430: [Normal] - Behavior Tree Engine chưa hỗ trợ DecoratorNode, ConditionNode, SubTreeNode và cơ chế Blackboard.
+431: [Normal] - Chưa có khả năng quét tự động (crawler) để khám phá toàn bộ cấu trúc ứng dụng.
+432: [Heading 2] Hướng phát triển mở rộng của đề tài
+433: [Normal] Trong tương lai, đề tài có thể được phát triển mở rộng theo nhiều hướng:
+434: [Normal] (1) Bổ sung thêm module kiểm thử: API Security (REST, GraphQL) với kiểm tra rate-limiting, authentication, input validation; WebSocket Security; JWT Security; Business Logic Flaws; File Upload Vulnerability; SSRF (Server-Side Request Forgery).
+435: [Normal] (2) Tích hợp cơ chế quét tự động (Web Crawler): Xây dựng crawler tự động khám phá toàn bộ cấu trúc ứng dụng web (sitemap, form, link, API endpoint) để kiểm thử toàn diện hơn.
+436: [Normal] (3) Xây dựng giao diện web dashboard: Sử dụng React/Vue.js để xây dựng dashboard hiển thị kết quả kiểm thử trực quan dạng biểu đồ, lịch sử kiểm thử, so sánh kết quả giữa các lần chạy.
+437: [Normal] (4) Hỗ trợ authentication đa dạng: JWT Bearer Token, OAuth 2.0 Authorization Code/Client Credentials, SAML Assertion, API Key (header/query param).
+438: [Normal] (5) Mở rộng Behavior Tree Engine: Thêm DecoratorNode, ConditionNode, SubTreeNode, Blackboard mechanism.
+439: [Normal] (6) Tích hợp hệ thống CI/CD phổ biến: GitHub Actions, GitLab CI, Jenkins, CircleCI với các template mẫu (sample workflow files).
+440: [Normal] (7) Export kết quả đa dạng: HTML report, PDF report, JUnit XML (tương thích với Jenkins), SARIF (Static Analysis Results Interchange Format).
+441: [Normal] (8) Cộng đồng mã nguồn mở: Đưa dự án lên GitHub với documentation đầy đủ, contribution guidelines và issue templates.
+443: [Heading 1] TÀI LIỆU THAM KHẢO
+444: [Normal] [1] OWASP Foundation, OWASP Top 10 - 2021: The Ten Most Critical Web Application Security Risks, https://owasp.org/Top10/.
+445: [Normal] [2] OWASP Foundation, OWASP Testing Guide v5, https://owasp.org/www-project-web-security-testing-guide/.
+446: [Normal] [3] MITRE ATT&CK Framework, Technique T1190: Exploit Public-Facing Application, https://attack.mitre.org/techniques/T1190/.
+447: [Normal] [4] Michele Colledanchise and Petter Ogren, Behavior Trees in Robotics and AI: An Introduction, CRC Press, 2018, ISBN 978-1-138-59374-9.
+448: [Normal] [5] Alex J. Champandard, Behavior Trees for Next-Gen Game AI, Game Developers Conference (GDC) Proceedings, 2007.
+449: [Normal] [6] Damian Isla, Handling Complexity in the Halo 2 AI, Game Developers Conference (GDC) Proceedings, 2005.
+450: [Normal] [7] Python Software Foundation, requests: HTTP for Humans, https://docs.python-requests.org/en/latest/.
+451: [Normal] [8] pytest documentation: pytest helps you write better programs, https://docs.pytest.org/en/stable/.
+452: [Normal] [9] Mozilla Observatory, Web Security Scanner, https://observatory.mozilla.org/.
+453: [Normal] [10] Microsoft Developer Network (MSDN), CreateProcessA function (processthreadsapi.h), https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessa.
+454: [Normal] [11] Mark Russinovich, Windows Sysinternals Suite - AccessChk and Icacls documentation, Microsoft Docs.
+455: [Normal] [12] PortSwigger Web Security Academy, CSRF (Cross-Site Request Forgery), https://portswigger.net/web-security/csrf.
+457: [Normal] Mã nguồn 3.2: decorators.py — Retry, Timeout, Invert, Cooldown, Log
+458: [Normal] import time, threading
+459: [Normal] from .nodes import Node, NodeStatus
+461: [Normal] class Decorator(Node):
+462: [Normal] def __init__(self, name, child):
+463: [Normal] super().__init__(name)
+464: [Normal] self.child = child
+466: [Normal] class Retry(Decorator):
+467: [Normal] def __init__(self, name, child, max_attempts=3, delay=0):
+468: [Normal] super().__init__(name, child)
+469: [Normal] self.max_attempts = max_attempts
+470: [Normal] self.delay = delay
+471: [Normal] def tick(self, blackboard):
+472: [Normal] for attempt in range(self.max_attempts):
+473: [Normal] status = self.child.tick(blackboard)
+474: [Normal] if status == NodeStatus.SUCCESS:
+475: [Normal] return NodeStatus.SUCCESS
+476: [Normal] if self.delay and attempt < self.max_attempts - 1:
+477: [Normal] time.sleep(self.delay)
+478: [Normal] return NodeStatus.FAILURE
+480: [Normal] class Timeout(Decorator):
+481: [Normal] def __init__(self, name, child, max_seconds=10):
+482: [Normal] super().__init__(name, child)
+483: [Normal] self.max_seconds = max_seconds
+484: [Normal] def tick(self, blackboard):
+485: [Normal] result = [NodeStatus.FAILURE]
+486: [Normal] def run(): result[0] = self.child.tick(blackboard)
+487: [Normal] t = threading.Thread(target=run)
+488: [Normal] t.daemon = True; t.start()
+489: [Normal] t.join(timeout=self.max_seconds)
+490: [Normal] return result[0]
+492: [Normal] class Invert(Decorator):
+493: [Normal] def tick(self, blackboard):
+494: [Normal] status = self.child.tick(blackboard)
+495: [Normal] if status == NodeStatus.SUCCESS: return NodeStatus.FAILURE
+496: [Normal] elif status == NodeStatus.FAILURE: return NodeStatus.SUCCESS
+497: [Normal] return status
+499: [Normal] class Cooldown(Decorator):
+500: [Normal] def __init__(self, name, child, min_interval=0):
+501: [Normal] super().__init__(name, child)
+502: [Normal] self.min_interval = min_interval
+503: [Normal] self._last_tick = 0
+504: [Normal] def tick(self, blackboard):
+505: [Normal] now = time.time()
+506: [Normal] if now - self._last_tick < self.min_interval:
+507: [Normal] return NodeStatus.SUCCESS
+508: [Normal] self._last_tick = now
+509: [Normal] return self.child.tick(blackboard)
+511: [Normal] class Log(Decorator):
+512: [Normal] def __init__(self, name, child, label=""):
+513: [Normal] super().__init__(name, child)
+514: [Normal] self.label = label or name
+515: [Normal] def tick(self, blackboard):
+516: [Normal] start = time.time()
+517: [Normal] status = self.child.tick(blackboard)
+518: [Normal] elapsed = time.time() - start
+519: [Normal] print(f"[{self.label}] {status.value} ({elapsed:.3f}s)")
+520: [Normal] return status
+522: [Normal] Mã nguồn 3.3: adapters.py — ModuleAdapter (kết nối module vào BT)
+523: [Normal] from .nodes import NodeStatus
+524: [Normal] from .leaves import Action
+525: [Normal] from ..results.models import TestResult, TestStatus, Severity
+527: [Normal] class ModuleAdapter(Action):
+528: [Normal] def __init__(self, name, module):
+529: [Normal] super().__init__(name)
+530: [Normal] self.module = module
+531: [Normal] def do_tick(self, blackboard):
+532: [Normal] client = blackboard.client
+533: [Normal] target = blackboard.target
+534: [Normal] try:
+535: [Normal] endpoints = self.module.discover(client, target)
+536: [Normal] results = self.module.test(client, target, endpoints)
+537: [Normal] for r in (results or []):
+538: [Normal] blackboard.add_result(r)
+539: [Normal] has_failure = any(
+540: [Normal] r.status in (TestStatus.FAIL, TestStatus.ERROR)
+541: [Normal] for r in (results or [])
+542: [Normal] )
+543: [Normal] return NodeStatus.FAILURE if has_failure else NodeStatus.SUCCESS
+544: [Normal] except Exception as e:
+545: [Normal] blackboard.add_result(TestResult(
+546: [Normal] module=self.name, test_name="exception",
+547: [Normal] status=TestStatus.ERROR, severity=Severity.HIGH,
+548: [Normal] endpoint=target, evidence=str(e),
+549: [Normal] recommendation="Check module compatibility",
+550: [Normal] ))
+551: [Normal] return NodeStatus.FAILURE
+553: [Normal] Mã nguồn 3.4: Ví dụ xây dựng cây kiểm thử hoàn chỉnh
+554: [Normal] from websec_test.engine import Sequence, Selector, Retry, Parallel, ModuleAdapter
+555: [Normal] from websec_test.modules.headers import HeadersModule
+556: [Normal] from websec_test.modules.auth import AuthModule
+557: [Normal] from websec_test.modules.disclosure import DisclosureModule
+559: [Normal] root = Sequence("full_scan", children=[
+560: [Normal] ModuleAdapter("headers", HeadersModule()),
+561: [Normal] Retry("auth_retry", max_attempts=3, delay=1,
+562: [Normal] child=ModuleAdapter("auth", AuthModule(creds))),
+563: [Normal] Selector("fallback", children=[
+564: [Normal] ModuleAdapter("disclosure", DisclosureModule()),
+565: [Normal] ModuleAdapter("auth", AuthModule(creds)),
+566: [Normal] ]),
+567: [Normal] Parallel("injections", min_success=1, children=[
+568: [Normal] # SQLi, XSS, Command Injection tests
+569: [Normal] ]),
+570: [Normal] ModuleAdapter("authz", AuthorizationModule()),
+571: [Normal] ])
+573: [Normal] Bảng 3.3: Tổng kết kết quả kiểm thử ứng dụng Nhom_2s.
+574: [Normal] Phát hiện chính
+575: [Normal] Kết quả kiểm thử cho thấy ứng dụng Nhom_2s có hai vấn đề bảo mật đáng chú ý. Thứ nhất, toàn bộ 8 security headers đều chưa được thiết lập, bao gồm HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, Cross-Origin-Opener-Policy và Cross-Origin-Resource-Policy. Điều này khiến ứng dụng dễ bị tấn công clickjacking, XSS dạng cũ, và thiếu cơ chế bảo vệ vận chuyển. Thứ hai, cơ chế rate limiting chưa được triển khai trên form đăng nhập, cho phép tấn công brute force mật khẩu. Bên cạnh đó, hệ thống gửi password rỗng cũng được chấp nhận ở tầng xử lý (cảnh báo mức WARN). Các module cors, cookies, disclosure và methods đều đạt PASS, cho thấy cấu hình CORS an toàn, không lộ thông tin máy chủ và không cho phép các HTTP method nguy hiểm.
+576: [Normal] Kết quả chi tiết trên terminal
+577: [Normal] Hình dưới đây là output từ quá trình chạy kiểm thử với toàn bộ 10 module:
+578: [Normal] ============================================================
+579: [Normal] Web Security Test — http://localhost:8080/Nhom_2s
+580: [Normal] ============================================================
+581: [Normal] Target reachable (HTTP 200)
+583: [Normal] [FAIL] headers (8 tests):
+584: [Normal] check_strict_transport_security  — Missing HSTS header
+585: [Normal] check_content_security_policy    — Missing CSP header
+586: [Normal] check_x_frame_options           — Missing X-Frame-Options
+587: [Normal] check_x_content_type_options    — Missing X-Content-Type-Options
+588: [Normal] check_referrer_policy           — Missing Referrer-Policy
+589: [Normal] check_permissions_policy        — Missing Permissions-Policy
+590: [Normal] check_cross_origin_opener_policy— Missing COOP header
+591: [Normal] check_cross_origin_resource_policy— Missing CORP header
+593: [Normal] [WARN] auth/blank_password_login
+594: [Normal] Login accepts empty password submission
+596: [Normal] [FAIL] auth/rate_limiting
+597: [Normal] No rate limiting on login endpoint
+599: [Normal] [PASS] auth/sqli_login_bypass     — SQLi payloads rejected
+600: [Normal] [PASS] auth/username_enumeration  — No username enumeration
+602: [Normal] [FAIL] authz/forced_browsing (14 paths)
+603: [Normal] /admin, /backup, /config, /.env, /console, /actuator, ...
+604: [Normal] (Tomcat 404 page — HTTP 200, content length 4122)
+606: [Normal] [FAIL] authz/idor_check
+607: [Normal] Sequential user endpoints accessible
+609: [Normal] [ERROR] ssl_tls/certificate_valid — HTTP only (no SSL on 8080)
+610: [Normal] [FAIL]  ssl_tls/hsts_preload      — No HSTS header
+612: [Normal] [PASS] cors (3/3)     — No wildcard origins
+613: [Normal] [PASS] cookies (3/3)  — No cookies set
+614: [Normal] [PASS] disclosure (7/7) — No info leaks
+615: [Normal] [PASS] methods (5/5)  — Only GET/HEAD/POST/OPTIONS allowed
+617: [Normal] ------------------------------------------------------------
+618: [Normal] Summary: 52 total  |  PASS: 25  |  FAIL: 25  |  WARN: 1  |  ERROR: 1
+619: [Normal] ------------------------------------------------------------
+621: [Normal] Duration: 4.5 seconds
+622: [Normal] Report: reports/websec_report_20260619_114916.json
+625: [Normal] Mã nguồn 3.2: decorators.py — Retry, Timeout, Invert, Cooldown, Log
+626: [Normal] import time, threading
+627: [Normal] from .nodes import Node, NodeStatus
+629: [Normal] class Decorator(Node):
+630: [Normal] def __init__(self, name, child):
+631: [Normal] super().__init__(name)
+632: [Normal] self.child = child
+634: [Normal] class Retry(Decorator):
+635: [Normal] def __init__(self, name, child, max_attempts=3, delay=0):
+636: [Normal] super().__init__(name, child)
+637: [Normal] self.max_attempts = max_attempts
+638: [Normal] self.delay = delay
+639: [Normal] def tick(self, blackboard):
+640: [Normal] for attempt in range(self.max_attempts):
+641: [Normal] status = self.child.tick(blackboard)
+642: [Normal] if status == NodeStatus.SUCCESS:
+643: [Normal] return NodeStatus.SUCCESS
+644: [Normal] if self.delay and attempt < self.max_attempts - 1:
+645: [Normal] time.sleep(self.delay)
+646: [Normal] return NodeStatus.FAILURE
+648: [Normal] class Timeout(Decorator):
+649: [Normal] def __init__(self, name, child, max_seconds=10):
+650: [Normal] super().__init__(name, child)
+651: [Normal] self.max_seconds = max_seconds
+652: [Normal] def tick(self, blackboard):
+653: [Normal] result = [NodeStatus.FAILURE]
+654: [Normal] def run(): result[0] = self.child.tick(blackboard)
+655: [Normal] t = threading.Thread(target=run)
+656: [Normal] t.daemon = True; t.start()
+657: [Normal] t.join(timeout=self.max_seconds)
+658: [Normal] return result[0]
+660: [Normal] class Invert(Decorator):
+661: [Normal] def tick(self, blackboard):
+662: [Normal] status = self.child.tick(blackboard)
+663: [Normal] if status == NodeStatus.SUCCESS: return NodeStatus.FAILURE
+664: [Normal] elif status == NodeStatus.FAILURE: return NodeStatus.SUCCESS
+665: [Normal] return status
+667: [Normal] class Cooldown(Decorator):
+668: [Normal] def __init__(self, name, child, min_interval=0):
+669: [Normal] super().__init__(name, child)
+670: [Normal] self.min_interval = min_interval
+671: [Normal] self._last_tick = 0
+672: [Normal] def tick(self, blackboard):
+673: [Normal] now = time.time()
+674: [Normal] if now - self._last_tick < self.min_interval:
+675: [Normal] return NodeStatus.SUCCESS
+676: [Normal] self._last_tick = now
+677: [Normal] return self.child.tick(blackboard)
+679: [Normal] class Log(Decorator):
+680: [Normal] def __init__(self, name, child, label=""):
+681: [Normal] super().__init__(name, child)
+682: [Normal] self.label = label or name
+683: [Normal] def tick(self, blackboard):
+684: [Normal] start = time.time()
+685: [Normal] status = self.child.tick(blackboard)
+686: [Normal] elapsed = time.time() - start
+687: [Normal] print(f"[{self.label}] {status.value} ({elapsed:.3f}s)")
+688: [Normal] return status
+690: [Normal] Mã nguồn 3.3: adapters.py — ModuleAdapter (kết nối module vào BT)
+691: [Normal] from .nodes import NodeStatus
+692: [Normal] from .leaves import Action
+693: [Normal] from ..results.models import TestResult, TestStatus, Severity
+695: [Normal] class ModuleAdapter(Action):
+696: [Normal] def __init__(self, name, module):
+697: [Normal] super().__init__(name)
+698: [Normal] self.module = module
+699: [Normal] def do_tick(self, blackboard):
+700: [Normal] client = blackboard.client
+701: [Normal] target = blackboard.target
+702: [Normal] try:
+703: [Normal] endpoints = self.module.discover(client, target)
+704: [Normal] results = self.module.test(client, target, endpoints)
+705: [Normal] for r in (results or []):
+706: [Normal] blackboard.add_result(r)
+707: [Normal] has_failure = any(
+708: [Normal] r.status in (TestStatus.FAIL, TestStatus.ERROR)
+709: [Normal] for r in (results or [])
+710: [Normal] )
+711: [Normal] return NodeStatus.FAILURE if has_failure else NodeStatus.SUCCESS
+712: [Normal] except Exception as e:
+713: [Normal] blackboard.add_result(TestResult(
+714: [Normal] module=self.name, test_name="exception",
+715: [Normal] status=TestStatus.ERROR, severity=Severity.HIGH,
+716: [Normal] endpoint=target, evidence=str(e),
+717: [Normal] recommendation="Check module compatibility",
+718: [Normal] ))
+719: [Normal] return NodeStatus.FAILURE
+721: [Normal] Mã nguồn 3.4: Ví dụ xây dựng cây kiểm thử hoàn chỉnh
+722: [Normal] from websec_test.engine import Sequence, Selector, Retry, Parallel, ModuleAdapter
+723: [Normal] from websec_test.modules.headers import HeadersModule
+724: [Normal] from websec_test.modules.auth import AuthModule
+725: [Normal] from websec_test.modules.disclosure import DisclosureModule
+727: [Normal] root = Sequence("full_scan", children=[
+728: [Normal] ModuleAdapter("headers", HeadersModule()),
+729: [Normal] Retry("auth_retry", max_attempts=3, delay=1,
+730: [Normal] child=ModuleAdapter("auth", AuthModule(creds))),
+731: [Normal] Selector("fallback", children=[
+732: [Normal] ModuleAdapter("disclosure", DisclosureModule()),
+733: [Normal] ModuleAdapter("auth", AuthModule(creds)),
+734: [Normal] ]),
+735: [Normal] Parallel("injections", min_success=1, children=[
+736: [Normal] # SQLi, XSS, Command Injection tests
+737: [Normal] ]),
+738: [Normal] ModuleAdapter("authz", AuthorizationModule()),
+739: [Normal] ])
+
+--- TABLE 0 ---
+  Row 0: Tầng 1: CLI Entry Point | argparse -> main.py
+Phân tích tham số, điều phối luồng kiểm thử
+  Row 1: | | |
+  Row 2: Tầng 2: Core Engine | SessionClient + Behavior Tree Engine
+Blackboard o Sequence o Selector o Parallel o Decorators
+  Row 3: | | |
+  Row 4: Tầng 3: Modules & Results | 10 Module kiểm thử -> ResultCollector -> Reporter
+headers, auth, csrf, sql_injection, authz, ssl_tls...
+
+--- TABLE 1 ---
+  Row 0: ROOT: SequenceNode (full_scan) | Thực thi tuần tự các module
+  Row 1: +-- ModuleAdapter (headers) | Kiểm tra 8 Security Headers
+  Row 2: +-- Retry (auth, attempts=3) | Thử lại 3 lần nếu auth thất bại
+  Row 3: |   +-- ModuleAdapter (auth) | Form login, bypass, rate-limit
+  Row 4: +-- Selector (fallback) | Thử disclosure, auth backup
+  Row 5: |   +-- ModuleAdapter (disclosure) | Info disclosure check
+  Row 6: |   +-- ModuleAdapter (auth) | Phương án dự phòng
+  Row 7: +-- Parallel (injections) | Chạy song song 3 injection tests
+  Row 8: |   +-- SQLi / XSS / CMD inj | 
+  Row 9: +-- ModuleAdapter (authz) | Forced browsing + IDOR test
+
+--- TABLE 2 ---
+  Row 0: Module | Số lượng | PASS | FAIL | WARN/ERROR | Ghi chú
+  Row 1: headers | 8 | 0 | 8 | 0 | Thiếu toàn bộ security headers
+  Row 2: auth | 4 | 2 | 1 | 1 WARN | Rate limiting + blank password
+  Row 3: authz | 15 | 1 | 14 | 0 | Forced browsing (Tomcat 404)
+  Row 4: ssl_tls | 3 | 1 | 1 | 1 ERROR | HTTP, không có SSL
+  Row 5: cors | 3 | 3 | 0 | 0 | Không có CORS misconfig
+  Row 6: cookies | 3 | 3 | 0 | 0 | Không có cookie
+  Row 7: disclosure | 7 | 7 | 0 | 0 | Không lộ thông tin
+  Row 8: methods | 5 | 5 | 0 | 0 | Chỉ GET/HEAD/POST/OPTIONS
+  Row 9: Tổng cộng | 52 | 25 | 25 | 2 | 4.5 giây

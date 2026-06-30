@@ -12,7 +12,8 @@ from websec_test.engine import Sequence, ModuleAdapter, Blackboard, CheckTreeBui
 # Module registry — dynamically discovered from websec_test/modules/
 from websec_test.engine.loader import discover_modules
 
-ALL_MODULES, MODULE_FACTORIES = discover_modules()
+ALL_MODULES, MODULE_FACTORIES, SHORT_NAME_MAP = discover_modules()
+ALL_MODULES = sorted(set(ALL_MODULES) | set(SHORT_NAME_MAP.keys()))
 
 
 def parse_args(argv=None):
@@ -29,7 +30,7 @@ def parse_args(argv=None):
     parser.add_argument("--log", nargs="?", const="log.txt", default=None,
                         help="Path to write plain-text log (default: log.txt)")
     parser.add_argument("--check", help="Run a single check (format: module/check_name, "
-                        "e.g. headers/check_strict_transport_security)")
+                        "e.g. configuration.headers/check_strict_transport_security)")
     parser.add_argument("--discover", action="store_true",
                         help="Run discovery only — show endpoints and checks without testing")
     parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
@@ -99,6 +100,8 @@ def run(args):
     start = time.time()
 
     # Build module registry from discovered factories
+    modules_to_run = [SHORT_NAME_MAP.get(m, m) for m in modules_to_run]
+
     def _make_module(name: str) -> object:
         cls = MODULE_FACTORIES[name]
         if name == "auth":
@@ -121,9 +124,10 @@ def run(args):
     if args.check:
         if "/" not in args.check:
             print("[!] --check must be in format: module/check_name "
-                  "(e.g. headers/check_strict_transport_security)")
+                  "(e.g. configuration.headers/check_strict_transport_security)")
             sys.exit(1)
         module_name, check_name = args.check.split("/", 1)
+        module_name = SHORT_NAME_MAP.get(module_name, module_name)
         if module_name not in MODULE_FACTORIES:
             print(f"[!] Unknown module: {module_name}")
             sys.exit(1)

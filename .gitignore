@@ -24,9 +24,10 @@ Thumbs.db
 # Reports outputs
 reports/**/*.docx
 !reports/**/*.md
+reports/*.json
 
 # Environment
 .env
 
 # Debug / temp scripts
-_*.py
+_[a-z]*.py
