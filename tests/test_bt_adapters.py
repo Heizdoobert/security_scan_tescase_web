@@ -98,3 +98,64 @@ def test_module_adapter_real_module(blackboard):
     assert result in (NodeStatus.SUCCESS, NodeStatus.FAILURE)
     assert len(blackboard.results) > 0
     assert all(r.module == "headers" for r in blackboard.results)
+
+
+# ── CheckAdapter Tests ───────────────────────────────────────────────
+
+def dummy_check(client, target, endpoint):
+    return TestResult(module="dummy", test_name="dummy_check", status=TestStatus.PASS,
+                      severity=Severity.INFO, endpoint=str(endpoint), evidence="ok")
+
+
+def test_check_adapter_success(blackboard):
+    from websec_test.engine.adapters import CheckAdapter
+    adapter = CheckAdapter("test_check", dummy_check, "/foo")
+    result = adapter.tick(blackboard)
+    assert result == NodeStatus.SUCCESS
+    assert len(blackboard.results) == 1
+    assert blackboard.results[0].test_name == "dummy_check"
+
+
+def test_check_adapter_failure(blackboard):
+    from websec_test.engine.adapters import CheckAdapter
+    def fail_check(client, target, endpoint):
+        return TestResult(module="dummy", test_name="fail", status=TestStatus.FAIL,
+                          severity=Severity.HIGH, endpoint=str(endpoint), evidence="nope")
+    adapter = CheckAdapter("fail_check", fail_check, "/bar")
+    result = adapter.tick(blackboard)
+    assert result == NodeStatus.FAILURE
+    assert len(blackboard.results) == 1
+
+
+def test_check_adapter_info_is_success(blackboard):
+    from websec_test.engine.adapters import CheckAdapter
+    def info_check(client, target, endpoint):
+        return TestResult(module="dummy", test_name="info_test", status=TestStatus.INFO,
+                          severity=Severity.INFO, endpoint=str(endpoint), evidence="info")
+    adapter = CheckAdapter("info_check", info_check, "/baz")
+    result = adapter.tick(blackboard)
+    assert result == NodeStatus.SUCCESS
+
+
+def test_check_adapter_warn_is_failure(blackboard):
+    from websec_test.engine.adapters import CheckAdapter
+    def warn_check(client, target, endpoint):
+        return TestResult(module="dummy", test_name="warn", status=TestStatus.WARN,
+                          severity=Severity.MEDIUM, endpoint=str(endpoint), evidence="warn")
+    adapter = CheckAdapter("warn_check", warn_check, "/qux")
+    result = adapter.tick(blackboard)
+    assert result == NodeStatus.FAILURE
+
+
+def test_check_adapter_calls_fn_with_correct_args(blackboard):
+    from websec_test.engine.adapters import CheckAdapter
+    captured = {}
+    def capture(client, target, endpoint):
+        captured.update(client=client, target=target, endpoint=endpoint)
+        return TestResult(module="dummy", test_name="capture", status=TestStatus.PASS,
+                          severity=Severity.INFO, endpoint=str(endpoint), evidence="")
+    adapter = CheckAdapter("capture", capture, "/capture")
+    adapter.tick(blackboard)
+    assert captured["client"] == "cli"
+    assert captured["target"] == "http://example.com"
+    assert captured["endpoint"] == "/capture"

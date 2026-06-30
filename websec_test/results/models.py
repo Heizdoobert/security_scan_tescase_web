@@ -8,6 +8,7 @@ class TestStatus(Enum):
     FAIL = "fail"
     WARN = "warn"
     ERROR = "error"
+    INFO = "info"
 
 
 class Severity(Enum):
