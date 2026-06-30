@@ -24,6 +24,8 @@ def parse_args(argv=None):
     parser.add_argument("--auth", help="Credentials in user:pass format for authenticated tests")
     parser.add_argument("--modules", nargs="+", choices=ALL_MODULES,
                         help="Specific modules to run (default: all)")
+    parser.add_argument("--scope", choices=["quick", "full", "api"],
+                        help="Quick (headers/cookies/ssl), full (all), or API-focused modules")
     parser.add_argument("--all", action="store_true", help="Run all test modules")
     parser.add_argument("--output", default="./reports", help="Output directory for JSON reports")
     parser.add_argument("--timeout", type=int, default=10, help="Per-request timeout in seconds")
@@ -42,6 +44,12 @@ def parse_args(argv=None):
                         help="Open HTML dashboard in browser (implies --dashboard)")
     args = parser.parse_args(argv)
     if args.all:
+        args.modules = ALL_MODULES
+    if args.scope == "quick":
+        args.modules = [m for m in ALL_MODULES if m.startswith(("configuration.", "injection.sqli"))]
+    elif args.scope == "api":
+        args.modules = [m for m in ALL_MODULES if m.startswith(("authentication.", "injection."))]
+    elif args.scope == "full":
         args.modules = ALL_MODULES
     return args
 

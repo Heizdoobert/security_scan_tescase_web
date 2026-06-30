@@ -28,3 +28,5 @@ class TestResult:
     endpoint: str = ""
     evidence: str = ""
     recommendation: str = ""
+    cvss_score: float | None = None
+    cvss_vector: str | None = None
