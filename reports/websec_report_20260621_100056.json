@@ -1,0 +1,86 @@
+{
+  "target": "http://localhost:8080/Nhom_2s",
+  "timestamp": "2026-06-21T10:00:56.951377",
+  "duration_seconds": 0.004383563995361328,
+  "summary": {
+    "total": 8,
+    "pass": 0,
+    "fail": 8,
+    "warn": 0,
+    "error": 0
+  },
+  "results": [
+    {
+      "module": "headers",
+      "test_name": "check_strict_transport_security",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/",
+      "evidence": "Missing 'Strict-Transport-Security' header",
+      "recommendation": "Add 'Strict-Transport-Security: max-age=31536000; includeSubDomains' header"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_content_security_policy",
+      "status": "fail",
+      "severity": "high",
+      "endpoint": "/",
+      "evidence": "Missing 'Content-Security-Policy' header",
+      "recommendation": "Add a Content-Security-Policy header to prevent XSS and data injection"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_x_frame_options",
+      "status": "fail",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "Missing 'X-Frame-Options' header",
+      "recommendation": "Add 'X-Frame-Options: DENY' or 'SAMEORIGIN' to prevent clickjacking"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_x_content_type_options",
+      "status": "fail",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "Missing 'X-Content-Type-Options' header",
+      "recommendation": "Add 'X-Content-Type-Options: nosniff' to prevent MIME sniffing"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_referrer_policy",
+      "status": "fail",
+      "severity": "low",
+      "endpoint": "/",
+      "evidence": "Missing 'Referrer-Policy' header",
+      "recommendation": "Add 'Referrer-Policy: strict-origin-when-cross-origin' header"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_permissions_policy",
+      "status": "fail",
+      "severity": "low",
+      "endpoint": "/",
+      "evidence": "Missing 'Permissions-Policy' header",
+      "recommendation": "Add 'Permissions-Policy' header to restrict browser feature access"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_cross_origin_opener_policy",
+      "status": "fail",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "Missing 'Cross-Origin-Opener-Policy' header",
+      "recommendation": "Add 'Cross-Origin-Opener-Policy: same-origin' to prevent cross-origin opener leaks"
+    },
+    {
+      "module": "headers",
+      "test_name": "check_cross_origin_resource_policy",
+      "status": "fail",
+      "severity": "medium",
+      "endpoint": "/",
+      "evidence": "Missing 'Cross-Origin-Resource-Policy' header",
+      "recommendation": "Add 'Cross-Origin-Resource-Policy: same-origin' to restrict resource loading from other origins"
+    }
+  ]
+}
