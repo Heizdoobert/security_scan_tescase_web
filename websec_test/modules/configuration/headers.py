@@ -1,6 +1,7 @@
 """Security headers test module."""
 from collections import namedtuple
 
+import requests
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestResult, TestStatus, Severity
 
@@ -50,38 +51,46 @@ class HeadersModule:
         return [Endpoint(url="/", method="GET")]
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
-        """Check each endpoint for required security headers."""
-        results = []
-        for ep in endpoints:
-            try:
-                resp = client.get(ep.url)
-            except requests.exceptions.RequestException as e:
-                for header, info in HEADER_CHECKS.items():
-                    results.append(TestResult(
-                        module="headers",
-                        test_name=f"check_{header.replace('-', '_').lower()}",
-                        status=TestStatus.ERROR,
-                        severity=info["severity"],
-                        endpoint=ep.url,
-                        evidence=f"Request failed: {e}",
-                        recommendation=info["recommendation"],
-                    ))
-                continue
-            for header, info in HEADER_CHECKS.items():
-                if header in resp.headers:
-                    status = TestStatus.PASS
-                    evidence = f"{header}: {resp.headers[header]}"
-                else:
-                    status = TestStatus.FAIL
-                    evidence = f"Missing '{header}' header"
-                results.append(TestResult(
-                    module="headers",
-                    test_name=f"check_{header.replace('-', '_').lower()}",
-                    status=status,
-                    severity=info["severity"],
-                    endpoint=ep.url,
-                    evidence=evidence,
-                    recommendation=info["recommendation"],
-                ))
-        return results
+        """Legacy test method — kept for ModuleAdapter backward compat."""
+        return [self._check_single(client, target, ep, header, info)
+                for ep in endpoints
+                for header, info in HEADER_CHECKS.items()]
+
+    def _check_single(self, client, target, endpoint, header, info):
+        try:
+            resp = client.get(getattr(endpoint, 'url', str(endpoint)))
+        except Exception as e:
+            return TestResult(module="headers",
+                test_name=f"check_{header.replace('-', '_').lower()}",
+                status=TestStatus.ERROR, severity=info["severity"],
+                endpoint=getattr(endpoint, 'url', str(endpoint)),
+                evidence=f"Request failed: {e}", recommendation=info["recommendation"])
+        if header in resp.headers:
+            return TestResult(module="headers",
+                test_name=f"check_{header.replace('-', '_').lower()}",
+                status=TestStatus.PASS, severity=info["severity"],
+                endpoint=getattr(endpoint, 'url', str(endpoint)),
+                evidence=f"{header}: {resp.headers[header]}", recommendation=info["recommendation"])
+        return TestResult(module="headers",
+            test_name=f"check_{header.replace('-', '_').lower()}",
+            status=TestStatus.FAIL, severity=info["severity"],
+            endpoint=getattr(endpoint, 'url', str(endpoint)),
+            evidence=f"Missing '{header}' header", recommendation=info["recommendation"])
+
+    def check_strict_transport_security(self, client, target, endpoint):
+        return self._check_single(client, target, endpoint, "Strict-Transport-Security", HEADER_CHECKS["Strict-Transport-Security"])
+    def check_content_security_policy(self, client, target, endpoint):
+        return self._check_single(client, target, endpoint, "Content-Security-Policy", HEADER_CHECKS["Content-Security-Policy"])
+    def check_x_frame_options(self, client, target, endpoint):
+        return self._check_single(client, target, endpoint, "X-Frame-Options", HEADER_CHECKS["X-Frame-Options"])
+    def check_x_content_type_options(self, client, target, endpoint):
+        return self._check_single(client, target, endpoint, "X-Content-Type-Options", HEADER_CHECKS["X-Content-Type-Options"])
+    def check_referrer_policy(self, client, target, endpoint):
+        return self._check_single(client, target, endpoint, "Referrer-Policy", HEADER_CHECKS["Referrer-Policy"])
+    def check_permissions_policy(self, client, target, endpoint):
+        return self._check_single(client, target, endpoint, "Permissions-Policy", HEADER_CHECKS["Permissions-Policy"])
+    def check_cross_origin_opener_policy(self, client, target, endpoint):
+        return self._check_single(client, target, endpoint, "Cross-Origin-Opener-Policy", HEADER_CHECKS["Cross-Origin-Opener-Policy"])
+    def check_cross_origin_resource_policy(self, client, target, endpoint):
+        return self._check_single(client, target, endpoint, "Cross-Origin-Resource-Policy", HEADER_CHECKS["Cross-Origin-Resource-Policy"])
 

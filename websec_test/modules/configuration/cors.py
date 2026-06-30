@@ -18,78 +18,58 @@ class CorsModule:
         return [Endpoint(url="/", method="GET")]
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
-        """Send requests with a spoofed Origin header and inspect CORS headers."""
-        results = []
-        malicious_origin = "https://evil.com"
+        """Legacy test method — kept for ModuleAdapter backward compat."""
+        return [r for ep in endpoints for r in [
+            self.check_wildcard_origin(client, target, ep),
+            self.check_credentials_with_wildcard(client, target, ep),
+            self.check_reflected_origin(client, target, ep),
+        ]]
 
-        for ep in endpoints:
-            resp = client.get(ep.url, headers={"Origin": malicious_origin})
-            acao = resp.headers.get("Access-Control-Allow-Origin", "")
-            acac = resp.headers.get("Access-Control-Allow-Credentials", "")
+    def check_wildcard_origin(self, client, target, endpoint):
+        ep_url = getattr(endpoint, 'url', str(endpoint))
+        resp = client.get(ep_url, headers={"Origin": "https://evil.com"})
+        acao = resp.headers.get("Access-Control-Allow-Origin", "")
+        if acao == "*":
+            return TestResult(module="cors", test_name="wildcard_origin",
+                status=TestStatus.FAIL, severity=Severity.HIGH, endpoint=ep_url,
+                evidence="Access-Control-Allow-Origin: * allows any site",
+                recommendation="Restrict ACAO to specific trusted origins, not wildcard")
+        elif acao == "https://evil.com":
+            return TestResult(module="cors", test_name="wildcard_origin",
+                status=TestStatus.FAIL, severity=Severity.HIGH, endpoint=ep_url,
+                evidence="Origin 'https://evil.com' echoed back in ACAO",
+                recommendation="Validate Origin against a whitelist, do not echo it back")
+        return TestResult(module="cors", test_name="wildcard_origin",
+            status=TestStatus.PASS, severity=Severity.HIGH, endpoint=ep_url,
+            evidence=f"ACAO: {acao or '(not set)'}",
+            recommendation="No action needed")
 
-            # Test: wildcard origin
-            if acao == "*":
-                results.append(TestResult(
-                    module="cors", test_name="wildcard_origin",
-                    status=TestStatus.FAIL, severity=Severity.HIGH,
-                    endpoint=ep.url,
-                    evidence=f"Access-Control-Allow-Origin: * allows any site",
-                    recommendation="Restrict ACAO to specific trusted origins, not wildcard",
-                ))
-            elif acao == malicious_origin:
-                results.append(TestResult(
-                    module="cors", test_name="wildcard_origin",
-                    status=TestStatus.FAIL, severity=Severity.HIGH,
-                    endpoint=ep.url,
-                    evidence=f"Origin '{malicious_origin}' echoed back in ACAO",
-                    recommendation="Validate Origin against a whitelist, do not echo it back",
-                ))
-            else:
-                results.append(TestResult(
-                    module="cors", test_name="wildcard_origin",
-                    status=TestStatus.PASS, severity=Severity.HIGH,
-                    endpoint=ep.url,
-                    evidence=f"ACAO: {acao or '(not set)'}",
-                    recommendation="No action needed",
-                ))
+    def check_credentials_with_wildcard(self, client, target, endpoint):
+        ep_url = getattr(endpoint, 'url', str(endpoint))
+        resp = client.get(ep_url, headers={"Origin": "https://evil.com"})
+        acao = resp.headers.get("Access-Control-Allow-Origin", "")
+        acac = resp.headers.get("Access-Control-Allow-Credentials", "")
+        if acao == "*" and acac.lower() == "true":
+            return TestResult(module="cors", test_name="credentials_with_wildcard",
+                status=TestStatus.FAIL, severity=Severity.CRITICAL, endpoint=ep_url,
+                evidence="Access-Control-Allow-Credentials: true with wildcard origin",
+                recommendation="Cannot use wildcard origin with credentials. Use specific origin.")
+        return TestResult(module="cors", test_name="credentials_with_wildcard",
+            status=TestStatus.PASS, severity=Severity.CRITICAL, endpoint=ep_url,
+            evidence=f"ACAC: {acac or '(not set)'}, ACAO: {acao or '(not set)'}",
+            recommendation="No action needed")
 
-            # Test: credentials with wildcard
-            if acao == "*" and acac.lower() == "true":
-                results.append(TestResult(
-                    module="cors", test_name="credentials_with_wildcard",
-                    status=TestStatus.FAIL, severity=Severity.CRITICAL,
-                    endpoint=ep.url,
-                    evidence="Access-Control-Allow-Credentials: true with wildcard origin",
-                    recommendation="Cannot use wildcard origin with credentials. Use specific origin.",
-                ))
-            else:
-                results.append(TestResult(
-                    module="cors", test_name="credentials_with_wildcard",
-                    status=TestStatus.PASS, severity=Severity.CRITICAL,
-                    endpoint=ep.url,
-                    evidence=f"ACAC: {acac or '(not set)'}, ACAO: {acao or '(not set)'}",
-                    recommendation="No action needed",
-                ))
-
-            # Test: reflected origin (server echoes back any Origin)
-            resp2 = client.get(ep.url, headers={"Origin": "https://attacker.com"})
-            acao2 = resp2.headers.get("Access-Control-Allow-Origin", "")
-            if acao2 == "https://attacker.com":
-                results.append(TestResult(
-                    module="cors", test_name="reflected_origin",
-                    status=TestStatus.FAIL, severity=Severity.HIGH,
-                    endpoint=ep.url,
-                    evidence="Server reflects arbitrary Origin headers",
-                    recommendation="Whitelist allowed origins instead of reflecting",
-                ))
-            else:
-                results.append(TestResult(
-                    module="cors", test_name="reflected_origin",
-                    status=TestStatus.PASS, severity=Severity.HIGH,
-                    endpoint=ep.url,
-                    evidence=f"Origin not reflected: {acao2 or '(not set)'}",
-                    recommendation="No action needed",
-                ))
-
-        return results
+    def check_reflected_origin(self, client, target, endpoint):
+        ep_url = getattr(endpoint, 'url', str(endpoint))
+        resp = client.get(ep_url, headers={"Origin": "https://attacker.com"})
+        acao2 = resp.headers.get("Access-Control-Allow-Origin", "")
+        if acao2 == "https://attacker.com":
+            return TestResult(module="cors", test_name="reflected_origin",
+                status=TestStatus.FAIL, severity=Severity.HIGH, endpoint=ep_url,
+                evidence="Server reflects arbitrary Origin headers",
+                recommendation="Whitelist allowed origins instead of reflecting")
+        return TestResult(module="cors", test_name="reflected_origin",
+            status=TestStatus.PASS, severity=Severity.HIGH, endpoint=ep_url,
+            evidence=f"Origin not reflected: {acao2 or '(not set)'}",
+            recommendation="No action needed")
 

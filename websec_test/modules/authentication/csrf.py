@@ -44,67 +44,50 @@ class CSRFModule:
         return self._extract_forms(resp.text, target)
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
-        results = []
-        for ep in endpoints:
-            resp = client.get(ep.url)
-            token = client.extract_csrf_token(resp.text)
+        """Legacy test method — kept for ModuleAdapter backward compat."""
+        return [r for ep in endpoints for r in [
+            self.check_missing_csrf_token(client, target, ep),
+            self.check_csrf_token_reuse(client, target, ep),
+        ]]
 
-            if token:
-                results.append(TestResult(
-                    module="csrf",
-                    test_name="missing_csrf_token",
-                    status=TestStatus.PASS,
-                    severity=Severity.HIGH,
-                    endpoint=ep.url,
-                    evidence=f"CSRF token found: {token[:20]}...",
-                    recommendation="No action needed",
-                ))
-                # Test: token reuse — use the actual CSRF field name from the form
-                data = {field: "test" for field in ep.fields if field not in CSRFModule.CSRF_FIELD_NAMES}
-                csrf_field_name = self._detect_csrf_field_name(ep.fields)
-                try:
-                    r1 = client.post(ep.url, data=data | {csrf_field_name: token})
-                    r2 = client.post(ep.url, data=data | {csrf_field_name: token})
-                except requests.exceptions.RequestException as e:
-                    results.append(TestResult(
-                        module="csrf",
-                        test_name="csrf_token_reuse",
-                        status=TestStatus.ERROR,
-                        severity=Severity.HIGH,
-                        endpoint=ep.url,
-                        evidence=f"Request failed during reuse test: {e}",
-                        recommendation="Check server availability and try again",
-                    ))
-                    continue
-                if r1.status_code == 200 and r2.status_code == 200:
-                    results.append(TestResult(
-                        module="csrf",
-                        test_name="csrf_token_reuse",
-                        status=TestStatus.FAIL,
-                        severity=Severity.HIGH,
-                        endpoint=ep.url,
-                        evidence=f"Same token '{token[:20]}...' accepted twice ({r1.status_code}, {r2.status_code})",
-                        recommendation="Invalidate CSRF token after each use",
-                    ))
-                else:
-                    results.append(TestResult(
-                        module="csrf",
-                        test_name="csrf_token_reuse",
-                        status=TestStatus.PASS,
-                        severity=Severity.HIGH,
-                        endpoint=ep.url,
-                        evidence="Token reuse rejected",
-                        recommendation="No action needed",
-                    ))
-            else:
-                results.append(TestResult(
-                    module="csrf",
-                    test_name="missing_csrf_token",
-                    status=TestStatus.FAIL,
-                    severity=Severity.HIGH,
-                    endpoint=ep.url,
-                    evidence="No CSRF token found in any form field",
-                    recommendation="Add CSRF token to all state-changing POST forms",
-                ))
-        return results
+    def _get_token(self, client, endpoint):
+        ep_url = getattr(endpoint, 'url', str(endpoint))
+        resp = client.get(ep_url)
+        return client.extract_csrf_token(resp.text)
+
+    def check_missing_csrf_token(self, client, target, endpoint):
+        token = self._get_token(client, endpoint)
+        ep_url = getattr(endpoint, 'url', str(endpoint))
+        if token:
+            return TestResult(module="csrf", test_name="missing_csrf_token",
+                status=TestStatus.PASS, severity=Severity.HIGH, endpoint=ep_url,
+                evidence=f"CSRF token found: {token[:20]}...",
+                recommendation="No action needed")
+        return TestResult(module="csrf", test_name="missing_csrf_token",
+            status=TestStatus.FAIL, severity=Severity.HIGH, endpoint=ep_url,
+            evidence="No CSRF token found in any form field",
+            recommendation="Add CSRF token to all state-changing POST forms")
+
+    def check_csrf_token_reuse(self, client, target, endpoint):
+        token = self._get_token(client, endpoint)
+        ep_url = getattr(endpoint, 'url', str(endpoint))
+        data = {field: "test" for field in endpoint.fields if field not in CSRFModule.CSRF_FIELD_NAMES}
+        csrf_field_name = self._detect_csrf_field_name(endpoint.fields)
+        try:
+            r1 = client.post(ep_url, data=data | {csrf_field_name: token})
+            r2 = client.post(ep_url, data=data | {csrf_field_name: token})
+        except requests.exceptions.RequestException as e:
+            return TestResult(module="csrf", test_name="csrf_token_reuse",
+                status=TestStatus.ERROR, severity=Severity.HIGH, endpoint=ep_url,
+                evidence=f"Request failed during reuse test: {e}",
+                recommendation="Check server availability and try again")
+        if r1.status_code == 200 and r2.status_code == 200:
+            return TestResult(module="csrf", test_name="csrf_token_reuse",
+                status=TestStatus.FAIL, severity=Severity.HIGH, endpoint=ep_url,
+                evidence=f"Same token '{token[:20]}...' accepted twice ({r1.status_code}, {r2.status_code})",
+                recommendation="Invalidate CSRF token after each use")
+        return TestResult(module="csrf", test_name="csrf_token_reuse",
+            status=TestStatus.PASS, severity=Severity.HIGH, endpoint=ep_url,
+            evidence="Token reuse rejected",
+            recommendation="No action needed")
 

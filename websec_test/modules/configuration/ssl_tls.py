@@ -156,11 +156,19 @@ class SslTlsModule:
             )
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
-        """Run all SSL/TLS checks."""
-        results = []
-        for ep in endpoints:
-            results.extend(self._check_certificate(ep.host, ep.port))
-            results.extend(self._check_weak_protocols(ep.host, ep.port))
-            results.append(self._check_hsts_preload(client))
-        return results
+        """Legacy test method — kept for ModuleAdapter backward compat."""
+        return [r for ep in endpoints for r in [
+            self.check_certificate_valid(client, target, ep),
+            self.check_weak_protocol_tls_1_0(client, target, ep),
+            self.check_hsts_preload(client, target, ep),
+        ]]
+
+    def check_certificate_valid(self, client, target, endpoint):
+        return self._check_certificate(endpoint.host, endpoint.port)[0]
+
+    def check_weak_protocol_tls_1_0(self, client, target, endpoint):
+        return self._check_weak_protocols(endpoint.host, endpoint.port)[0]
+
+    def check_hsts_preload(self, client, target, endpoint):
+        return self._check_hsts_preload(client)
 

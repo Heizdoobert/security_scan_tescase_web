@@ -40,67 +40,42 @@ class AuthorizationModule:
         return any(kw in body_lower for kw in self._404_BODY_KEYWORDS)
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
+        """Legacy test method — kept for ModuleAdapter backward compat."""
         results = []
-
-        # Forced browsing — check common admin paths
         for path in COMMON_PATHS:
-            try:
-                resp = client.get(path)
-            except requests.exceptions.RequestException as e:
-                results.append(TestResult(
-                    module="authz",
-                    test_name="forced_browsing",
-                    status=TestStatus.ERROR,
-                    severity=Severity.HIGH,
-                    endpoint=path,
-                    evidence=f"Request failed: {e}",
-                    recommendation="Check server availability",
-                ))
-                continue
+            ep = Endpoint(url=path, method="GET")
+            results.append(self.check_forced_browsing(client, target, ep))
+        results.append(self.check_idor_check(client, target, endpoints[0]))
+        return results
 
-            if resp.status_code == 200 and len(resp.text) > 50 and not self._is_likely_404(resp):
-                results.append(TestResult(
-                    module="authz",
-                    test_name="forced_browsing",
-                    status=TestStatus.FAIL,
-                    severity=Severity.HIGH,
-                    endpoint=path,
-                    evidence=f"Accessible: {resp.status_code}, content length: {len(resp.text)}",
-                    recommendation="Restrict access to {path} with authentication and authorization checks",
-                ))
-            else:
-                results.append(TestResult(
-                    module="authz",
-                    test_name="forced_browsing",
-                    status=TestStatus.PASS,
-                    severity=Severity.HIGH,
-                    endpoint=path,
-                    evidence=f"Blocked: {resp.status_code}",
-                    recommendation="No action needed",
-                ))
+    def check_forced_browsing(self, client, target, endpoint):
+        path = getattr(endpoint, 'url', str(endpoint))
+        try:
+            resp = client.get(path)
+        except requests.exceptions.RequestException as e:
+            return TestResult(module="authz", test_name="forced_browsing",
+                status=TestStatus.ERROR, severity=Severity.HIGH, endpoint=path,
+                evidence=f"Request failed: {e}",
+                recommendation="Check server availability")
+        if resp.status_code == 200 and len(resp.text) > 50 and not self._is_likely_404(resp):
+            return TestResult(module="authz", test_name="forced_browsing",
+                status=TestStatus.FAIL, severity=Severity.HIGH, endpoint=path,
+                evidence=f"Accessible: {resp.status_code}, content length: {len(resp.text)}",
+                recommendation=f"Restrict access to {path} with authentication and authorization checks")
+        return TestResult(module="authz", test_name="forced_browsing",
+            status=TestStatus.PASS, severity=Severity.HIGH, endpoint=path,
+            evidence=f"Blocked: {resp.status_code}",
+            recommendation="No action needed")
 
-        # IDOR check
+    def check_idor_check(self, client, target, endpoint):
         user_endpoints = self._guess_user_id_patterns(client, target)
         if user_endpoints:
-            results.append(TestResult(
-                module="authz",
-                test_name="idor_check",
-                status=TestStatus.FAIL,
-                severity=Severity.CRITICAL,
-                endpoint=str(user_endpoints),
+            return TestResult(module="authz", test_name="idor_check",
+                status=TestStatus.FAIL, severity=Severity.CRITICAL, endpoint=str(user_endpoints),
                 evidence=f"Sequential user endpoints accessible without auth: {user_endpoints}",
-                recommendation="Implement proper access control checks on all user-specific endpoints",
-            ))
-        else:
-            results.append(TestResult(
-                module="authz",
-                test_name="idor_check",
-                status=TestStatus.PASS,
-                severity=Severity.CRITICAL,
-                endpoint="/user/{id}",
-                evidence="No sequential user endpoints discovered",
-                recommendation="No action needed",
-            ))
-
-        return results
+                recommendation="Implement proper access control checks on all user-specific endpoints")
+        return TestResult(module="authz", test_name="idor_check",
+            status=TestStatus.PASS, severity=Severity.CRITICAL, endpoint="/user/{id}",
+            evidence="No sequential user endpoints discovered",
+            recommendation="No action needed")
 

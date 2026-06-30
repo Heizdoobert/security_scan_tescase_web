@@ -21,32 +21,33 @@ class CmdInjectionModule:
         return self._extract_form_inputs(resp.text)
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
-        results = []
-        for ep in endpoints:
-            for param in ep.param_names:
-                for payload in CMD_INJECT_PAYLOADS[:2]:
-                    params = {param: payload}
-                    url = f"{target.rstrip('/')}{ep.url}?{urlencode(params)}"
-                    try:
-                        resp = client.get(url)
-                    except:
-                        continue
-                    if any(word in resp.text.lower() for word in CMD_OUTPUT_SIGNALS):
-                        results.append(TestResult(
-                            module="cmd_injection", test_name="cmd_injection",
-                            status=TestStatus.FAIL, severity=Severity.CRITICAL,
-                            endpoint=url,
-                            evidence=f"Command output reflected: {resp.text[:200]}",
-                            recommendation="Never pass user input to system commands",
-                        ))
-                        break
-                else:
-                    results.append(TestResult(
+        """Legacy test method — kept for ModuleAdapter backward compat."""
+        return [r for ep in endpoints for r in [
+            self.check_cmd_injection(client, target, ep),
+        ]]
+
+    def check_cmd_injection(self, client, target, endpoint):
+        for param in endpoint.param_names:
+            for payload in CMD_INJECT_PAYLOADS[:2]:
+                params = {param: payload}
+                url = f"{target.rstrip('/')}{endpoint.url}?{urlencode(params)}"
+                try:
+                    resp = client.get(url)
+                except:
+                    continue
+                if any(word in resp.text.lower() for word in CMD_OUTPUT_SIGNALS):
+                    return TestResult(
                         module="cmd_injection", test_name="cmd_injection",
-                        status=TestStatus.PASS, severity=Severity.CRITICAL,
-                        endpoint=ep.url,
-                        evidence="No command output reflected",
-                        recommendation="No action needed",
-                    ))
-        return results
+                        status=TestStatus.FAIL, severity=Severity.CRITICAL,
+                        endpoint=url,
+                        evidence=f"Command output reflected: {resp.text[:200]}",
+                        recommendation="Never pass user input to system commands",
+                    )
+        return TestResult(
+            module="cmd_injection", test_name="cmd_injection",
+            status=TestStatus.PASS, severity=Severity.CRITICAL,
+            endpoint=endpoint.url,
+            evidence="No command output reflected",
+            recommendation="No action needed",
+        )
 

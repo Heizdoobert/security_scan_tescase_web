@@ -107,26 +107,78 @@ class DisclosureModule:
         )
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
-        """Run all information disclosure checks."""
+        """Legacy test method — kept for ModuleAdapter backward compat."""
         results = []
-
         for ep in endpoints:
             try:
                 resp = client.get(ep.url)
-
-                # Check info headers on root only
                 if ep.url == "/":
-                    results.extend(self._check_info_headers(resp))
-
-                # Check directory listing on non-root paths
+                    for header, evidence, severity in SENSITIVE_HEADERS:
+                        n = f"info_header_{header.lower().replace('-', '_')}"
+                        results.append(getattr(self, f"check_{n}")(client, target, ep))
                 if ep.url != "/" and resp.status_code == 200:
-                    dl_result = self._check_directory_listing(resp, ep.url)
-                    results.append(dl_result)
+                    results.append(self.check_directory_listing(client, target, ep))
             except Exception:
                 continue
-
-        # Stack trace check (only once)
-        results.append(self._check_stack_trace(client))
-
+        results.append(self.check_stack_trace_error(client, target, endpoints[0]))
         return results
+
+    def check_info_header_server(self, client, target, endpoint):
+        e = getattr(endpoint, 'url', str(endpoint))
+        resp = client.get(e)
+        value = resp.headers.get("Server", "")
+        if value:
+            return TestResult(module="disclosure", test_name="info_header_server",
+                status=TestStatus.FAIL, severity=Severity.MEDIUM, endpoint="/",
+                evidence=f"Server header reveals server software version: {value[:100]}",
+                recommendation="Remove or obfuscate the Server header")
+        return TestResult(module="disclosure", test_name="info_header_server",
+            status=TestStatus.PASS, severity=Severity.MEDIUM, endpoint="/",
+            evidence="No Server header present", recommendation="No action needed")
+
+    def check_info_header_x_powered_by(self, client, target, endpoint):
+        e = getattr(endpoint, 'url', str(endpoint))
+        resp = client.get(e)
+        value = resp.headers.get("X-Powered-By", "")
+        if value:
+            return TestResult(module="disclosure", test_name="info_header_x_powered_by",
+                status=TestStatus.FAIL, severity=Severity.LOW, endpoint="/",
+                evidence=f"X-Powered-By header reveals technology stack: {value[:100]}",
+                recommendation="Remove or obfuscate the X-Powered-By header")
+        return TestResult(module="disclosure", test_name="info_header_x_powered_by",
+            status=TestStatus.PASS, severity=Severity.LOW, endpoint="/",
+            evidence="No X-Powered-By header present", recommendation="No action needed")
+
+    def check_info_header_x_aspnet_version(self, client, target, endpoint):
+        e = getattr(endpoint, 'url', str(endpoint))
+        resp = client.get(e)
+        value = resp.headers.get("X-AspNet-Version", "")
+        if value:
+            return TestResult(module="disclosure", test_name="info_header_x_aspnet_version",
+                status=TestStatus.FAIL, severity=Severity.LOW, endpoint="/",
+                evidence=f"X-AspNet-Version leaks ASP.NET version: {value[:100]}",
+                recommendation="Remove or obfuscate the X-AspNet-Version header")
+        return TestResult(module="disclosure", test_name="info_header_x_aspnet_version",
+            status=TestStatus.PASS, severity=Severity.LOW, endpoint="/",
+            evidence="No X-AspNet-Version header present", recommendation="No action needed")
+
+    def check_info_header_x_aspnetmvc_version(self, client, target, endpoint):
+        e = getattr(endpoint, 'url', str(endpoint))
+        resp = client.get(e)
+        value = resp.headers.get("X-AspNetMvc-Version", "")
+        if value:
+            return TestResult(module="disclosure", test_name="info_header_x_aspnetmvc_version",
+                status=TestStatus.FAIL, severity=Severity.LOW, endpoint="/",
+                evidence=f"X-AspNetMvc-Version leaks MVC version: {value[:100]}",
+                recommendation="Remove or obfuscate the X-AspNetMvc-Version header")
+        return TestResult(module="disclosure", test_name="info_header_x_aspnetmvc_version",
+            status=TestStatus.PASS, severity=Severity.LOW, endpoint="/",
+            evidence="No X-AspNetMvc-Version header present", recommendation="No action needed")
+
+    def check_directory_listing(self, client, target, endpoint):
+        return self._check_directory_listing(client.get(getattr(endpoint, 'url', str(endpoint))),
+                                              getattr(endpoint, 'url', str(endpoint)))
+
+    def check_stack_trace_error(self, client, target, endpoint):
+        return self._check_stack_trace(client)
 

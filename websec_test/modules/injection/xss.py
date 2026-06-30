@@ -19,32 +19,33 @@ class XssModule:
         return self._extract_form_inputs(resp.text)
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
-        results = []
-        for ep in endpoints:
-            for param in ep.param_names:
-                for payload in XSS_PAYLOADS[:3]:
-                    params = {param: payload}
-                    url = f"{target.rstrip('/')}{ep.url}?{urlencode(params)}"
-                    try:
-                        resp = client.get(url)
-                    except:
-                        continue
-                    if payload in resp.text:
-                        results.append(TestResult(
-                            module="xss", test_name="xss_detection",
-                            status=TestStatus.FAIL, severity=Severity.HIGH,
-                            endpoint=url,
-                            evidence=f"XSS payload reflected: {payload[:100]}",
-                            recommendation="Encode all user-controlled data in responses",
-                        ))
-                        break
-                else:
-                    results.append(TestResult(
+        """Legacy test method — kept for ModuleAdapter backward compat."""
+        return [r for ep in endpoints for r in [
+            self.check_xss_detection(client, target, ep),
+        ]]
+
+    def check_xss_detection(self, client, target, endpoint):
+        for param in endpoint.param_names:
+            for payload in XSS_PAYLOADS[:3]:
+                params = {param: payload}
+                url = f"{target.rstrip('/')}{endpoint.url}?{urlencode(params)}"
+                try:
+                    resp = client.get(url)
+                except:
+                    continue
+                if payload in resp.text:
+                    return TestResult(
                         module="xss", test_name="xss_detection",
-                        status=TestStatus.PASS, severity=Severity.HIGH,
-                        endpoint=ep.url,
-                        evidence="No XSS payload reflection detected",
-                        recommendation="No action needed",
-                    ))
-        return results
+                        status=TestStatus.FAIL, severity=Severity.HIGH,
+                        endpoint=url,
+                        evidence=f"XSS payload reflected: {payload[:100]}",
+                        recommendation="Encode all user-controlled data in responses",
+                    )
+        return TestResult(
+            module="xss", test_name="xss_detection",
+            status=TestStatus.PASS, severity=Severity.HIGH,
+            endpoint=endpoint.url,
+            evidence="No XSS payload reflection detected",
+            recommendation="No action needed",
+        )
 

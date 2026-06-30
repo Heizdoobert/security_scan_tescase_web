@@ -23,7 +23,71 @@ class NosqlModule:
         return self._extract_form_inputs(resp.text)
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
-        return self._test_nosqli(client, target, endpoints)
+        """Legacy test method — kept for ModuleAdapter backward compat."""
+        return [r for ep in endpoints for r in [
+            self.check_nosql_injection(client, target, ep),
+        ]]
+
+    def check_nosql_injection(self, client, target, endpoint):
+        import requests
+        bypass_keywords = ["welcome", "dashboard", "login successful",
+                           "logged in", "authenticated", "success"]
+        for param in endpoint.param_names:
+            base_url = f"{target.rstrip('/')}{endpoint.url}"
+            baseline_url = f"{base_url}?{urlencode({param: 'invalid__test__value'})}"
+            try:
+                baseline = client.get(baseline_url)
+                baseline_len = len(baseline.text)
+            except requests.exceptions.ConnectionError:
+                continue
+
+            def url_encoded_req(p):
+                url = f"{base_url}?{self._php_style_params(param, p)}"
+                return client.get(url), url
+
+            result = self._try_nosql_format(
+                client, NOSQLI_PAYLOADS["auth_bypass"],
+                url_encoded_req, baseline_len, baseline.text,
+                bypass_keywords, "URL-encoded",
+            )
+            if result:
+                return result
+
+            def json_body_req(p):
+                return (
+                    client.post(base_url, json={param: p},
+                                headers={"Content-Type": "application/json"}),
+                    base_url,
+                )
+
+            result = self._try_nosql_format(
+                client, NOSQLI_PAYLOADS["auth_bypass"],
+                json_body_req, baseline_len, baseline.text,
+                bypass_keywords, "JSON body",
+            )
+            if result:
+                return result
+
+            def query_string_req(p):
+                params = {param: p}
+                url = f"{base_url}?{urlencode(params)}"
+                return client.get(url), url
+
+            result = self._try_nosql_format(
+                client, NOSQLI_PAYLOADS["field_injection"],
+                query_string_req, baseline_len, baseline.text,
+                bypass_keywords, "query string",
+            )
+            if result:
+                return result
+
+        return TestResult(
+            module="nosql", test_name="nosql_injection",
+            status=TestStatus.PASS, severity=Severity.CRITICAL,
+            endpoint=endpoint.url,
+            evidence="No NoSQL injection bypass detected",
+            recommendation="No action needed",
+        )
 
     def _test_nosqli(self, client: SessionClient, target: str, endpoints):
         import requests

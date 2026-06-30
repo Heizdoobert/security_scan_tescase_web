@@ -45,87 +45,73 @@ class CookiesModule:
         return cookies
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
-        """Check cookies for missing security flags."""
-        results = []
+        """Legacy test method — kept for ModuleAdapter backward compat."""
+        return [r for ep in endpoints for r in [
+            self.check_missing_secure_flag(client, target, ep),
+            self.check_missing_httponly_flag(client, target, ep),
+            self.check_missing_samesite_flag(client, target, ep),
+        ]]
 
-        for ep in endpoints:
-            resp = client.get(ep.url)
-            cookies = self._parse_cookies(resp)
+    def check_missing_secure_flag(self, client, target, endpoint):
+        ep_url = getattr(endpoint, 'url', str(endpoint))
+        resp = client.get(ep_url)
+        cookies = self._parse_cookies(resp)
+        if not cookies:
+            return TestResult(module="cookies", test_name="missing_secure_flag",
+                status=TestStatus.PASS, severity=Severity.HIGH,
+                endpoint=ep_url, evidence="No cookies set",
+                recommendation="No action needed")
+        insecure_cookies = [c["name"] for c in cookies if not c["secure"]]
+        if insecure_cookies:
+            return TestResult(module="cookies", test_name="missing_secure_flag",
+                status=TestStatus.FAIL, severity=Severity.HIGH,
+                endpoint=ep_url,
+                evidence=f"Cookies missing Secure flag: {', '.join(insecure_cookies)}",
+                recommendation="Set Secure flag on all cookies")
+        return TestResult(module="cookies", test_name="missing_secure_flag",
+            status=TestStatus.PASS, severity=Severity.HIGH,
+            endpoint=ep_url, evidence="All cookies have Secure flag",
+            recommendation="No action needed")
 
-            if not cookies:
-                results.append(TestResult(
-                    module="cookies", test_name="missing_secure_flag",
-                    status=TestStatus.PASS, severity=Severity.HIGH,
-                    endpoint=ep.url, evidence="No cookies set",
-                    recommendation="No action needed",
-                ))
-                results.append(TestResult(
-                    module="cookies", test_name="missing_httponly_flag",
-                    status=TestStatus.PASS, severity=Severity.MEDIUM,
-                    endpoint=ep.url, evidence="No cookies set",
-                    recommendation="No action needed",
-                ))
-                results.append(TestResult(
-                    module="cookies", test_name="missing_samesite_flag",
-                    status=TestStatus.PASS, severity=Severity.MEDIUM,
-                    endpoint=ep.url, evidence="No cookies set",
-                    recommendation="No action needed",
-                ))
-                return results
+    def check_missing_httponly_flag(self, client, target, endpoint):
+        ep_url = getattr(endpoint, 'url', str(endpoint))
+        resp = client.get(ep_url)
+        cookies = self._parse_cookies(resp)
+        if not cookies:
+            return TestResult(module="cookies", test_name="missing_httponly_flag",
+                status=TestStatus.PASS, severity=Severity.MEDIUM,
+                endpoint=ep_url, evidence="No cookies set",
+                recommendation="No action needed")
+        js_cookies = [c["name"] for c in cookies if not c["httponly"]]
+        if js_cookies:
+            return TestResult(module="cookies", test_name="missing_httponly_flag",
+                status=TestStatus.FAIL, severity=Severity.MEDIUM,
+                endpoint=ep_url,
+                evidence=f"Cookies missing HttpOnly flag: {', '.join(js_cookies)}",
+                recommendation="Set HttpOnly flag on cookies not needed by JavaScript")
+        return TestResult(module="cookies", test_name="missing_httponly_flag",
+            status=TestStatus.PASS, severity=Severity.MEDIUM,
+            endpoint=ep_url, evidence="All cookies have HttpOnly flag",
+            recommendation="No action needed")
 
-            # Check Secure flag
-            insecure_cookies = [c["name"] for c in cookies if not c["secure"]]
-            if insecure_cookies:
-                results.append(TestResult(
-                    module="cookies", test_name="missing_secure_flag",
-                    status=TestStatus.FAIL, severity=Severity.HIGH,
-                    endpoint=ep.url,
-                    evidence=f"Cookies missing Secure flag: {', '.join(insecure_cookies)}",
-                    recommendation="Set Secure flag on all cookies",
-                ))
-            else:
-                results.append(TestResult(
-                    module="cookies", test_name="missing_secure_flag",
-                    status=TestStatus.PASS, severity=Severity.HIGH,
-                    endpoint=ep.url, evidence="All cookies have Secure flag",
-                    recommendation="No action needed",
-                ))
-
-            # Check HttpOnly flag
-            js_cookies = [c["name"] for c in cookies if not c["httponly"]]
-            if js_cookies:
-                results.append(TestResult(
-                    module="cookies", test_name="missing_httponly_flag",
-                    status=TestStatus.FAIL, severity=Severity.MEDIUM,
-                    endpoint=ep.url,
-                    evidence=f"Cookies missing HttpOnly flag: {', '.join(js_cookies)}",
-                    recommendation="Set HttpOnly flag on cookies not needed by JavaScript",
-                ))
-            else:
-                results.append(TestResult(
-                    module="cookies", test_name="missing_httponly_flag",
-                    status=TestStatus.PASS, severity=Severity.MEDIUM,
-                    endpoint=ep.url, evidence="All cookies have HttpOnly flag",
-                    recommendation="No action needed",
-                ))
-
-            # Check SameSite flag
-            nosamesite_cookies = [c["name"] for c in cookies if not c["samesite"]]
-            if nosamesite_cookies:
-                results.append(TestResult(
-                    module="cookies", test_name="missing_samesite_flag",
-                    status=TestStatus.FAIL, severity=Severity.MEDIUM,
-                    endpoint=ep.url,
-                    evidence=f"Cookies missing SameSite flag: {', '.join(nosamesite_cookies)}",
-                    recommendation="Set SameSite=Lax or SameSite=Strict on all cookies",
-                ))
-            else:
-                results.append(TestResult(
-                    module="cookies", test_name="missing_samesite_flag",
-                    status=TestStatus.PASS, severity=Severity.MEDIUM,
-                    endpoint=ep.url, evidence="All cookies have SameSite flag",
-                    recommendation="No action needed",
-                ))
-
-        return results
+    def check_missing_samesite_flag(self, client, target, endpoint):
+        ep_url = getattr(endpoint, 'url', str(endpoint))
+        resp = client.get(ep_url)
+        cookies = self._parse_cookies(resp)
+        if not cookies:
+            return TestResult(module="cookies", test_name="missing_samesite_flag",
+                status=TestStatus.PASS, severity=Severity.MEDIUM,
+                endpoint=ep_url, evidence="No cookies set",
+                recommendation="No action needed")
+        nosamesite_cookies = [c["name"] for c in cookies if not c["samesite"]]
+        if nosamesite_cookies:
+            return TestResult(module="cookies", test_name="missing_samesite_flag",
+                status=TestStatus.FAIL, severity=Severity.MEDIUM,
+                endpoint=ep_url,
+                evidence=f"Cookies missing SameSite flag: {', '.join(nosamesite_cookies)}",
+                recommendation="Set SameSite=Lax or SameSite=Strict on all cookies")
+        return TestResult(module="cookies", test_name="missing_samesite_flag",
+            status=TestStatus.PASS, severity=Severity.MEDIUM,
+            endpoint=ep_url, evidence="All cookies have SameSite flag",
+            recommendation="No action needed")
 
