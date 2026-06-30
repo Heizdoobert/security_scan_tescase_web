@@ -1,39 +1,50 @@
 import time
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
-from .nodes import Node, NodeStatus, Blackboard
+import threading
+from .nodes import Node, NodeStatus
+
 
 class Decorator(Node):
     def __init__(self, name, child):
         super().__init__(name)
         self.child = child
+    def tick(self, blackboard):
+        return self.child.tick(blackboard)
+
 
 class Retry(Decorator):
-    def __init__(self, name, child, max_attempts=3, delay=0):
+    def __init__(self, name, child, max_retries=1, delay=0):
         super().__init__(name, child)
-        self.max_attempts = max_attempts
+        self.max_retries = max_retries
         self.delay = delay
     def tick(self, blackboard):
-        for attempt in range(self.max_attempts):
+        for attempt in range(self.max_retries + 1):
             status = self.child.tick(blackboard)
             if status == NodeStatus.SUCCESS:
                 return NodeStatus.SUCCESS
-            if self.delay and attempt < self.max_attempts - 1:
+            if self.delay and attempt < self.max_retries:
                 time.sleep(self.delay)
         return NodeStatus.FAILURE
 
+
 class Timeout(Decorator):
-    def __init__(self, name, child, max_seconds=10):
+    def __init__(self, name, child, timeout=30):
         super().__init__(name, child)
-        self.max_seconds = max_seconds
-        self._executor = ThreadPoolExecutor(max_workers=1)
+        self.timeout = timeout
     def tick(self, blackboard):
-        future = self._executor.submit(self.child.tick, blackboard)
-        try:
-            return future.result(timeout=self.max_seconds)
-        except FuturesTimeout:
-            return NodeStatus.FAILURE
-    def __del__(self):
-        self._executor.shutdown(wait=False)
+        result = [NodeStatus.FAILURE]
+        done = threading.Event()
+        def run():
+            try:
+                result[0] = self.child.tick(blackboard)
+            except Exception:
+                result[0] = NodeStatus.FAILURE
+            finally:
+                done.set()
+        t = threading.Thread(target=run, daemon=True)
+        t.start()
+        done.wait(self.timeout)
+        return result[0]
+
 
 class Invert(Decorator):
     def __init__(self, name, child):
@@ -42,29 +53,6 @@ class Invert(Decorator):
         status = self.child.tick(blackboard)
         if status == NodeStatus.SUCCESS:
             return NodeStatus.FAILURE
-        elif status == NodeStatus.FAILURE:
+        if status == NodeStatus.FAILURE:
             return NodeStatus.SUCCESS
-        return status
-
-class Cooldown(Decorator):
-    def __init__(self, name, child, min_interval=0):
-        super().__init__(name, child)
-        self.min_interval = min_interval
-        self._last_tick = 0
-    def tick(self, blackboard):
-        now = time.time()
-        if now - self._last_tick < self.min_interval:
-            return NodeStatus.SUCCESS
-        self._last_tick = now
-        return self.child.tick(blackboard)
-
-class Log(Decorator):
-    def __init__(self, name, child, label=""):
-        super().__init__(name, child)
-        self.label = label or name
-    def tick(self, blackboard):
-        start = time.time()
-        status = self.child.tick(blackboard)
-        elapsed = time.time() - start
-        print(f"[{self.label}] {status.value} ({elapsed:.3f}s)")
         return status
