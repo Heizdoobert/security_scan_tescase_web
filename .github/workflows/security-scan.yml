@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -e ".[dev]"
       - name: SAST scan
         run: python scripts/security_scanner.py . --severity high
       - name: Vulnerability assessment
@@ -26,13 +26,17 @@ jobs:
   nightly-audit:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -e ".[dev]"
       - name: Full SAST scan
         run: python scripts/security_scanner.py . --severity medium --json --output security.json
       - name: Full vulnerability scan
