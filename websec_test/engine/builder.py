@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from ..results.models import Severity
-from .nodes import NodeStatus, Sequence, Parallel
+from .nodes import NodeStatus, Sequence, SequentialGroup
 from .adapters import CheckAdapter, DiscoverAction
 
 
@@ -35,14 +35,14 @@ class CheckTreeBuilder:
         groups = CheckTreeBuilder._group_by_dependency(checks, check_nodes)
 
         if len(groups) == 1:
-            check_group = Parallel(
+            check_group = SequentialGroup(
                 f"{module_name}_checks",
                 children=groups[0],
                 min_success=0,
             )
         else:
             check_group = Sequence(f"{module_name}_checks", children=[
-                Parallel(
+                SequentialGroup(
                     f"{module_name}_group_{i}",
                     children=group,
                     min_success=0,

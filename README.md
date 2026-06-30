@@ -304,10 +304,14 @@ websec_test/
 ├── mongodb_check.py              # Companion: MongoDB security checks (via mongosh)
 ├── client/session.py             # HTTP client (session, cookies, CSRF extraction)
 ├── modules/
+│   ├── _shared.py                # Shared utilities (form parsing, Endpoint namedtuple)
 │   ├── headers.py                # Security header checks
 │   ├── auth.py                   # Authentication tests
 │   ├── csrf.py                   # CSRF token tests
-│   ├── injection.py              # SQLi, XSS, command injection, NoSQLi
+│   ├── sqli.py                   # SQL injection
+│   ├── xss.py                    # Cross-site scripting
+│   ├── cmd_injection.py          # Command injection
+│   ├── nosql.py                  # NoSQL injection
 │   ├── authz.py                  # Forced browsing, IDOR
 │   ├── ssl_tls.py                # Certificate, weak protocols, HSTS preload
 │   ├── cors.py                   # CORS misconfiguration checks
@@ -322,6 +326,7 @@ websec_test/
 │   ├── adapters.py               # ModuleAdapter — wraps existing modules
 │   ├── builder.py                # Build BT from CheckSpec specs + deps
 │   ├── registry.py               # Registry: register & look up per-check factories
+│   ├── loader.py                 # Plugin auto-discovery (pkgutil-based)
 │   └── checks/                   # Per-check BT nodes (used by --check-level)
 │       ├── auth.py               # Auth individual checks
 │       ├── authz.py              # Authorization individual checks
@@ -340,10 +345,11 @@ websec_test/
 ├── results/
 │   ├── models.py                 # TestResult dataclass, enums
 │   ├── collector.py              # Result aggregation + dedup
-│   └── reporter.py               # Terminal + JSON output
+│   ├── reporter.py               # Terminal + JSON + log output
+│   └── dashboard.py              # HTML dashboard generator
 └── config/payloads.py            # Attack payload dictionaries
 
-tests/                            # 244 pytest tests
+tests/                            # 252+ pytest tests
 ├── test_main.py                  # CLI entry point tests
 ├── test_session.py               # HTTP client tests
 ├── test_models.py                # Result model tests
@@ -353,7 +359,10 @@ tests/                            # 244 pytest tests
 ├── test_headers.py               # Header module tests
 ├── test_auth.py                  # Auth module tests
 ├── test_csrf.py                  # CSRF module tests
-├── test_injection.py             # Injection module tests
+├── test_sqli.py                  # SQL injection module tests
+├── test_xss.py                   # XSS module tests
+├── test_cmd_injection.py         # Command injection module tests
+├── test_nosql.py                 # NoSQL injection module tests
 ├── test_authz.py                 # Authorization module tests
 ├── test_ssl_tls.py               # SSL/TLS module tests
 ├── test_cors.py                  # CORS module tests
@@ -380,9 +389,13 @@ tests/                            # 244 pytest tests
 ├── test_bt_checks_cors.py        # Per-check BT: cors module
 ├── test_bt_checks_csrf.py        # Per-check BT: csrf module
 ├── test_bt_checks_disclosure.py  # Per-check BT: disclosure module
-├── test_bt_checks_injection.py   # Per-check BT: injection module
+├── test_bt_checks_sqli.py        # Per-check BT: sqli module
+├── test_bt_checks_xss.py         # Per-check BT: xss module
+├── test_bt_checks_cmd_injection.py  # Per-check BT: cmd_injection module
+├── test_bt_checks_nosql.py       # Per-check BT: nosql module
 ├── test_bt_checks_methods.py     # Per-check BT: methods module
-└── test_bt_checks_ssl_tls.py     # Per-check BT: ssl_tls module
+├── test_bt_checks_ssl_tls.py     # Per-check BT: ssl_tls module
+├── test_integration_live.py      # Live integration tests (Flask fixture, port 9876)
 
 scripts/
 ├── security_scanner.py           # Standalone SAST scanner CLI

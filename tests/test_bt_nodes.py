@@ -1,6 +1,6 @@
 """Tests for behavior tree composite nodes."""
 import pytest
-from websec_test.engine.nodes import Node, NodeStatus, Blackboard, Sequence, Selector, Parallel
+from websec_test.engine.nodes import Node, NodeStatus, Blackboard, Sequence, Selector, SequentialGroup
 from websec_test.engine.leaves import Action
 
 
@@ -115,23 +115,23 @@ def test_selector_all_fail(blackboard):
     assert sel.tick(blackboard) == NodeStatus.FAILURE
 
 
-# ── Parallel ────────────────────────────────────────────────────────
+# ── SequentialGroup ─────────────────────────────────────────────────
 
-def test_parallel_meets_threshold(blackboard):
-    para = Parallel("para", [
+def test_sequential_group_meets_threshold(blackboard):
+    seq = SequentialGroup("seq", [
         SimpleAction("a1", NodeStatus.SUCCESS),
         SimpleAction("a2", NodeStatus.SUCCESS),
         SimpleAction("a3", NodeStatus.SUCCESS),
         SimpleAction("a4", NodeStatus.FAILURE),
     ], min_success=3)
-    assert para.tick(blackboard) == NodeStatus.SUCCESS
+    assert seq.tick(blackboard) == NodeStatus.SUCCESS
 
 
-def test_parallel_fails_threshold(blackboard):
-    para = Parallel("para", [
+def test_sequential_group_fails_threshold(blackboard):
+    seq = SequentialGroup("seq", [
         SimpleAction("a1", NodeStatus.SUCCESS),
         SimpleAction("a2", NodeStatus.SUCCESS),
         SimpleAction("a3", NodeStatus.FAILURE),
         SimpleAction("a4", NodeStatus.FAILURE),
     ], min_success=3)
-    assert para.tick(blackboard) == NodeStatus.FAILURE
+    assert seq.tick(blackboard) == NodeStatus.FAILURE

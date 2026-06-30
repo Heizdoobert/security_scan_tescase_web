@@ -47,10 +47,9 @@ def test_parse_args_check_level():
 
 
 def test_parse_args_all_modules():
+    from websec_test.main import ALL_MODULES
     args = parse_args(["--target", "http://test.local", "--all"])
-    expected = ["headers", "auth", "csrf", "injection", "authz",
-                "ssl_tls", "cors", "cookies", "disclosure", "methods"]
-    assert args.modules == expected
+    assert args.modules == ALL_MODULES
 
 
 @mock.patch("websec_test.main.parse_args")

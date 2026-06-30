@@ -1,7 +1,7 @@
 """Tests for CheckTreeBuilder and CheckSpec."""
 import pytest
 from websec_test.engine.builder import CheckSpec, CheckTreeBuilder
-from websec_test.engine.nodes import Sequence, Parallel, NodeStatus, Blackboard
+from websec_test.engine.nodes import Sequence, SequentialGroup, NodeStatus, Blackboard
 from websec_test.engine.adapters import CheckAdapter, DiscoverAction
 from websec_test.results.models import Severity
 
@@ -98,9 +98,9 @@ def test_build_module_no_deps():
     assert root.name == "test_mod"
     assert isinstance(root.children[0], DiscoverAction)
 
-    # Second child should be Parallel (single group, no deps)
+    # Second child should be SequentialGroup (single group, no deps)
     check_group = root.children[1]
-    assert isinstance(check_group, Parallel)
+    assert isinstance(check_group, SequentialGroup)
     assert check_group.name == "test_mod_checks"
     assert len(check_group.children) == 1
     assert isinstance(check_group.children[0], CheckAdapter)
@@ -117,10 +117,10 @@ def test_build_module_with_deps():
     assert isinstance(root, Sequence)
     assert isinstance(root.children[0], DiscoverAction)
 
-    # Second child should be Sequence of Parallel groups
+    # Second child should be Sequence of SequentialGroup groups
     check_group = root.children[1]
     assert isinstance(check_group, Sequence)
     assert check_group.name == "test_mod_checks"
     assert len(check_group.children) == 2
-    assert isinstance(check_group.children[0], Parallel)
-    assert isinstance(check_group.children[1], Parallel)
+    assert isinstance(check_group.children[0], SequentialGroup)
+    assert isinstance(check_group.children[1], SequentialGroup)

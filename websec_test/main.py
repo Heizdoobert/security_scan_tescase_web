@@ -7,49 +7,14 @@ from websec_test.client.session import SessionClient
 from websec_test.results.collector import ResultCollector
 from websec_test.results.models import TestStatus
 from websec_test.results.reporter import Reporter
-from websec_test.engine import Sequence, ModuleAdapter, CheckTreeBuilder, CheckSpec, Blackboard, DiscoverAction, CheckAdapter
+from websec_test.engine import Sequence, ModuleAdapter, CheckTreeBuilder, Blackboard, DiscoverAction, CheckAdapter
 
-# Module registry — maps name to a factory callable(credentials, target) returning an instance
-from websec_test.modules.headers import HeadersModule, headers_check_specs
-from websec_test.modules.auth import AuthModule, auth_check_specs
-from websec_test.modules.csrf import CSRFModule, csrf_check_specs
-from websec_test.modules.injection import InjectionModule, injection_check_specs
-from websec_test.modules.authz import AuthorizationModule, authz_check_specs
-from websec_test.modules.ssl_tls import SslTlsModule, ssl_tls_check_specs
-from websec_test.modules.cors import CorsModule, cors_check_specs
-from websec_test.modules.cookies import CookiesModule, cookies_check_specs
-from websec_test.modules.disclosure import DisclosureModule, disclosure_check_specs
-from websec_test.modules.methods import MethodsModule, methods_check_specs
+# Module registry — dynamically discovered from websec_test/modules/
+from websec_test.engine.loader import discover_modules
 
-ALL_MODULES = ["headers", "auth", "csrf", "injection", "authz",
-                "ssl_tls", "cors", "cookies", "disclosure", "methods"]
+ALL_MODULES, MODULE_FACTORIES, CHECK_SPEC_REGISTRY = discover_modules()
 
-CHECK_LEVEL_MODULES = {"headers", "auth", "csrf", "injection", "authz",
-                       "ssl_tls", "cors", "cookies", "disclosure", "methods"}
-
-MODULE_FACTORIES: dict[str, type] = {
-    "headers": HeadersModule,
-    "csrf": CSRFModule,
-    "injection": InjectionModule,
-    "authz": AuthorizationModule,
-    "ssl_tls": SslTlsModule,
-    "cors": CorsModule,
-    "cookies": CookiesModule,
-    "disclosure": DisclosureModule,
-    "methods": MethodsModule,
-}
-CHECK_SPEC_REGISTRY: dict[str, list[CheckSpec]] = {
-    "headers": headers_check_specs(),
-    "auth": auth_check_specs(),
-    "csrf": csrf_check_specs(),
-    "injection": injection_check_specs(),
-    "authz": authz_check_specs(),
-    "ssl_tls": ssl_tls_check_specs(),
-    "cors": cors_check_specs(),
-    "cookies": cookies_check_specs(),
-    "disclosure": disclosure_check_specs(),
-    "methods": methods_check_specs(),
-}
+CHECK_LEVEL_MODULES = set(ALL_MODULES)
 
 
 def parse_args(argv=None):
@@ -74,6 +39,10 @@ def parse_args(argv=None):
     parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
     parser.add_argument("--secops", nargs="?", const=".", default=None,
                         help="Run SAST/dependency/compliance scan on a project directory")
+    parser.add_argument("--dashboard", action="store_true",
+                        help="Generate HTML dashboard report")
+    parser.add_argument("--open", action="store_true",
+                        help="Open HTML dashboard in browser (implies --dashboard)")
     args = parser.parse_args(argv)
     if args.all:
         args.modules = ALL_MODULES
@@ -148,11 +117,12 @@ def run(args):
     modules_to_run = args.modules or ALL_MODULES
     start = time.time()
 
-    # Build module registry from selected modules — use factory dict for uniformity
+    # Build module registry from discovered factories
     def _make_module(name: str) -> object:
+        cls = MODULE_FACTORIES[name]
         if name == "auth":
-            return AuthModule(credentials=args.auth, target=target)
-        return MODULE_FACTORIES[name]()
+            return cls(credentials=args.auth, target=target)
+        return cls()
 
     module_map = {
         name: _make_module(name)
@@ -189,11 +159,12 @@ def run(args):
             sys.exit(1)
         spec = matching[0]
 
-        # Instantiate module
+        # Instantiate module from discovered factories
+        cls = MODULE_FACTORIES[module_name]
         if module_name == "auth":
-            mod = AuthModule(credentials=args.auth, target=target)
+            mod = cls(credentials=args.auth, target=target)
         else:
-            mod = MODULE_FACTORIES[module_name]()
+            mod = cls()
 
         dis_fn = lambda c, t, _mod=mod: _mod.discover(c, t)
         tree = Sequence(module_name, children=[
@@ -235,6 +206,10 @@ def run(args):
     if args.log:
         log_path = reporter.to_log(args.log)
         print(f"[*] Log saved to: {log_path}")
+
+    if args.dashboard or args.open:
+        dash_path = reporter.to_dashboard(args.output, open_browser=args.open)
+        print(f"[*] Dashboard saved to: {dash_path}")
 
     # Exit code: non-zero if any FAIL or ERROR
     fail_count = collector.by_status.get(TestStatus.FAIL, 0)

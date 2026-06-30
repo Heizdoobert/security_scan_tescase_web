@@ -50,12 +50,12 @@ class Selector(Node):
                 return NodeStatus.SUCCESS
         return NodeStatus.FAILURE
 
-class Parallel(Node):
+class SequentialGroup(Node):
     """Run children sequentially, requiring a minimum number of successes.
 
-    Note: Children are executed SEQUENTIALLY in the current implementation,
-    not concurrently. The name reflects *semantic* parallelism — independent
-    checks that don't depend on each other's results.
+    Children are executed SEQUENTIALLY (not concurrently). The name reflects
+    *semantic* grouping — independent checks that don't depend on each other's
+    results but run in the same thread.
 
     ``min_success`` is the count of successful children required for the
     overall node to return SUCCESS. If fewer children succeed, returns FAILURE.
@@ -72,3 +72,7 @@ class Parallel(Node):
             if status == NodeStatus.SUCCESS:
                 success_count += 1
         return NodeStatus.SUCCESS if success_count >= self.min_success else NodeStatus.FAILURE
+
+
+# Deprecated alias — use SequentialGroup for new code
+Parallel = SequentialGroup
