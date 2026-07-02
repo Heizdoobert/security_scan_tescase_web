@@ -46,3 +46,10 @@ def test_no_false_positive():
     results = module.test(client, TARGET, endpoints)
     for r in results:
         assert r.status != TestStatus.ERROR
+
+def test_endpoint_dataclass():
+    from websec_test.modules._shared import Endpoint, Form, FormField
+    ep = Endpoint(url="/search", method="POST", forms=[Form(action="/search", method="POST", fields=[FormField(name="q", type="text")])])
+    assert ep.method == "POST"
+    assert len(ep.forms) == 1
+    assert ep.forms[0].fields[0].name == "q"
