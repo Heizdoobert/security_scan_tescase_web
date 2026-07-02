@@ -12,12 +12,7 @@ CMD_OUTPUT_SIGNALS = ["root:", "uid=", "volume", "directory of", "bin/"]
 class CmdInjectionModule:
     """Test for command injection vulnerabilities."""
 
-    def _extract_form_inputs(self, html: str) -> list[Endpoint]:
-        return parse_form_inputs(html)
 
-    def discover(self, client: SessionClient, target: str):
-        resp = client.get(target.rstrip("/") + "/")
-        return self._extract_form_inputs(resp.text)
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
         """Legacy test method — kept for ModuleAdapter backward compat."""
@@ -26,7 +21,14 @@ class CmdInjectionModule:
         ]]
 
     def check_cmd_injection(self, client, target, endpoint):
-        for param in endpoint.param_names:
+        if not endpoint.forms and not endpoint.param_names:
+            return None
+
+        all_params = set(endpoint.param_names)
+        for form in endpoint.forms:
+            all_params.update(f.name for f in form.fields)
+
+        for param in all_params:
             for payload in CMD_INJECT_PAYLOADS[:2]:
                 params = {param: payload}
                 url = f"{target.rstrip('/')}{endpoint.url}?{urlencode(params)}"

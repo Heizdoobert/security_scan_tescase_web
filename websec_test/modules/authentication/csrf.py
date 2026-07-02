@@ -6,8 +6,7 @@ from urllib.parse import urljoin
 import requests
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestResult, TestStatus, Severity
-
-Endpoint = namedtuple("Endpoint", ["url", "method", "form_action", "fields"])
+from websec_test.modules._shared import Endpoint
 
 
 class CSRFModule:
@@ -22,26 +21,7 @@ class CSRFModule:
                 return f
         return "csrf_token"
 
-    def _extract_forms(self, html: str, base_url: str) -> list[Endpoint]:
-        """Parse HTML for POST forms and their fields."""
-        forms = []
-        pattern = re.compile(
-            r'<form[^>]*method=["\'](post|POST)["\'][^>]*>.*?</form>',
-            re.DOTALL | re.IGNORECASE
-        )
-        for form_match in pattern.finditer(html):
-            form_html = form_match.group(0)
-            action_match = re.search(r'action=["\']([^"\']+)', form_html)
-            action = action_match.group(1) if action_match else base_url
-            fields = re.findall(r'<input[^>]*name=["\']([^"\']+)[^>]*>', form_html)
-            full_url = urljoin(base_url + "/", action.lstrip("/"))
-            forms.append(Endpoint(url=full_url, method="POST", form_action=action, fields=fields))
-        return forms
 
-    def discover(self, client: SessionClient, target: str):
-        """Scan the target root page for POST forms."""
-        resp = client.get("/")
-        return self._extract_forms(resp.text, target)
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
         """Legacy test method — kept for ModuleAdapter backward compat."""
@@ -56,6 +36,8 @@ class CSRFModule:
         return client.extract_csrf_token(resp.text)
 
     def check_missing_csrf_token(self, client, target, endpoint):
+        if not getattr(endpoint, 'forms', None):
+            return None
         token = self._get_token(client, endpoint)
         ep_url = getattr(endpoint, 'url', str(endpoint))
         if token:
@@ -69,10 +51,13 @@ class CSRFModule:
             recommendation="Add CSRF token to all state-changing POST forms")
 
     def check_csrf_token_reuse(self, client, target, endpoint):
+        if not getattr(endpoint, 'forms', None):
+            return None
         token = self._get_token(client, endpoint)
         ep_url = getattr(endpoint, 'url', str(endpoint))
-        data = {field: "test" for field in endpoint.fields if field not in CSRFModule.CSRF_FIELD_NAMES}
-        csrf_field_name = self._detect_csrf_field_name(endpoint.fields)
+        field_names = [f.name for form in endpoint.forms for f in form.fields]
+        data = {field: "test" for field in field_names if field not in CSRFModule.CSRF_FIELD_NAMES}
+        csrf_field_name = self._detect_csrf_field_name(field_names)
         try:
             r1 = client.post(ep_url, data=data | {csrf_field_name: token})
             r2 = client.post(ep_url, data=data | {csrf_field_name: token})

@@ -4,6 +4,7 @@ import responses
 from websec_test.modules.injection.nosql import NosqlModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
+from websec_test.modules._shared import parse_form_inputs
 
 TARGET = "http://localhost:8080/Nhom_2s-0.0.1-SNAPSHOT"
 
@@ -21,7 +22,7 @@ def test_discover_finds_form():
     responses.get(TARGET + "/", status=200, body=SEARCH_PAGE)
     client = SessionClient(TARGET)
     module = NosqlModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     assert len(endpoints) > 0
 
 
@@ -33,7 +34,7 @@ def test_nosql_payloads_in_form_fields():
                   body="invalid password")
     client = SessionClient(TARGET)
     module = NosqlModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     results = module.test(client, TARGET, endpoints)
     nosql_results = [r for r in results if r.test_name == "nosql_injection"]
     assert len(nosql_results) > 0
@@ -47,7 +48,7 @@ def test_nosql_bypass_detected():
                   status=200, body="welcome admin, logged in")
     client = SessionClient(TARGET)
     module = NosqlModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     results = module.test(client, TARGET, endpoints)
     nosql_bypass = [r for r in results if r.test_name == "nosql_injection"
                     and r.status == TestStatus.FAIL]
@@ -64,7 +65,7 @@ def test_nosql_no_bypass():
                   status=200, body="invalid password")
     client = SessionClient(TARGET)
     module = NosqlModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     results = module.test(client, TARGET, endpoints)
     nosql_results = [r for r in results if r.test_name == "nosql_injection"]
     assert any(r.status == TestStatus.PASS for r in nosql_results)
@@ -76,6 +77,6 @@ def test_nosql_connection_error():
     responses.get(BASELINE_URL, status=200, body="invalid password")
     client = SessionClient(TARGET)
     module = NosqlModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     results = module.test(client, TARGET, endpoints)
     assert len(results) > 0

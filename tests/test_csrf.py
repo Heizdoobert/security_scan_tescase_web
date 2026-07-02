@@ -3,6 +3,7 @@ import responses
 from websec_test.modules.authentication.csrf import CSRFModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
+from websec_test.modules._shared import parse_form_inputs
 
 TARGET = "http://localhost:8080/Nhom_2s-0.0.1-SNAPSHOT"
 
@@ -24,7 +25,7 @@ def test_discover_finds_forms():
     responses.get(TARGET + "/", status=200, body=FORM_WITH_CSRF)
     client = SessionClient(TARGET)
     module = CSRFModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     assert len(endpoints) > 0
 
 
@@ -34,7 +35,7 @@ def test_detects_missing_csrf_token():
     responses.get(TARGET + "/update", status=200, body=FORM_WITHOUT_CSRF)
     client = SessionClient(TARGET)
     module = CSRFModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     results = module.test(client, TARGET, endpoints)
     missing = [r for r in results if r.test_name == "missing_csrf_token"]
     assert len(missing) > 0
@@ -49,7 +50,7 @@ def test_passes_with_valid_csrf_token():
     responses.post(TARGET + "/update", status=200, body="Success")
     client = SessionClient(TARGET)
     module = CSRFModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     results = module.test(client, TARGET, endpoints)
     missing = [r for r in results if r.test_name == "missing_csrf_token"]
     assert len(missing) > 0
@@ -64,7 +65,7 @@ def test_token_reuse_detection():
     responses.post(TARGET + "/update", status=200, body="Success")
     client = SessionClient(TARGET)
     module = CSRFModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     results = module.test(client, TARGET, endpoints)
     reuse_tests = [r for r in results if r.test_name == "csrf_token_reuse"]
     assert len(reuse_tests) > 0

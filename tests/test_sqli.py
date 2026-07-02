@@ -3,6 +3,7 @@ import responses
 from websec_test.modules.injection.sqli import SqliModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
+from websec_test.modules._shared import parse_form_inputs
 
 TARGET = "http://localhost:8080/Nhom_2s-0.0.1-SNAPSHOT"
 
@@ -18,7 +19,7 @@ def test_discover_finds_form():
     responses.get(TARGET + "/", status=200, body=SEARCH_PAGE)
     client = SessionClient(TARGET)
     module = SqliModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     assert len(endpoints) > 0
 
 
@@ -29,7 +30,7 @@ def test_sqli_detects_reflected_error():
                   body="SQL syntax error near 'OR 1=1'")
     client = SessionClient(TARGET)
     module = SqliModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     results = module.test(client, TARGET, endpoints)
     sqli_tests = [r for r in results if r.test_name == "sqli_detection"]
     assert len(sqli_tests) > 0
@@ -42,7 +43,7 @@ def test_no_false_positive():
                   body="Results for: test (sanitized)")
     client = SessionClient(TARGET)
     module = SqliModule()
-    endpoints = module.discover(client, TARGET)
+    endpoints = parse_form_inputs(client.get(TARGET + "/").text)
     results = module.test(client, TARGET, endpoints)
     for r in results:
         assert r.status != TestStatus.ERROR

@@ -14,12 +14,7 @@ from websec_test.results.models import TestResult, TestStatus, Severity
 class NosqlModule:
     """Test for NoSQL injection vulnerabilities using MongoDB operators."""
 
-    def _extract_form_inputs(self, html: str) -> list[Endpoint]:
-        return parse_form_inputs(html)
 
-    def discover(self, client: SessionClient, target: str):
-        resp = client.get(target.rstrip("/") + "/")
-        return self._extract_form_inputs(resp.text)
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
         """Legacy test method — kept for ModuleAdapter backward compat."""
@@ -29,9 +24,16 @@ class NosqlModule:
 
     def check_nosql_injection(self, client, target, endpoint):
         import requests
+        if not endpoint.forms and not endpoint.param_names:
+            return None
+
+        all_params = set(endpoint.param_names)
+        for form in endpoint.forms:
+            all_params.update(f.name for f in form.fields)
+
         bypass_keywords = ["welcome", "dashboard", "login successful",
                            "logged in", "authenticated", "success"]
-        for param in endpoint.param_names:
+        for param in all_params:
             base_url = f"{target.rstrip('/')}{endpoint.url}"
             baseline_url = f"{base_url}?{urlencode({param: 'invalid__test__value'})}"
             try:
@@ -95,7 +97,14 @@ class NosqlModule:
                            "logged in", "authenticated", "success"]
 
         for ep in endpoints:
-            for param in ep.param_names:
+            if not ep.forms and not ep.param_names:
+                continue
+
+            all_params = set(ep.param_names)
+            for form in ep.forms:
+                all_params.update(f.name for f in form.fields)
+
+            for param in all_params:
                 base_url = f"{target.rstrip('/')}{ep.url}"
                 baseline_url = f"{base_url}?{urlencode({param: 'invalid__test__value'})}"
                 try:
