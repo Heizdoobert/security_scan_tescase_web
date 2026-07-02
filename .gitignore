@@ -31,3 +31,13 @@ reports/*.json
 
 # Debug / temp scripts
 _[a-z]*.py
+
+# Non-code artifacts and agent directories
+*.docx
+*.xlsx
+graphify-out/
+thoughts/
+.opencode/
+.superpowers/
+references/
+docs/

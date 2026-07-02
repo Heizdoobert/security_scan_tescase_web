@@ -72,44 +72,6 @@ class Reporter:
             ],
         }
 
-    def to_log(self, path: str = "log.txt") -> str:
-        """Write plain-text log (no ANSI codes) to *path* and return it."""
-        STATUS_LABELS = {
-            TestStatus.PASS: "PASS",
-            TestStatus.FAIL: "FAIL",
-            TestStatus.WARN: "WARN",
-            TestStatus.ERROR: "ERROR",
-        }
-        lines: list[str] = []
-        lines.append("=" * 60)
-        lines.append(f"  Web Security Test — {self.target}")
-        lines.append("=" * 60)
-        lines.append(f"  Start: {self._start_time.isoformat()}")
-        lines.append(f"  Modules: {len(set(r.module for r in self.collector.results))}")
-        lines.append("")
-        for r in self.collector.results:
-            label = STATUS_LABELS.get(r.status, str(r.status.value))
-            lines.append(f"  [{label}] {r.module}/{r.test_name}")
-            lines.append(f"         Result: Expect: {_derive_expect(r)}")
-            lines.append(f"                 Actual: {r.evidence[:120] if r.evidence else 'N/A'}")
-            lines.append(f"         Endpoint: {r.endpoint}")
-            if r.recommendation:
-                lines.append(f"         Fix: {r.recommendation}")
-            lines.append("")
-        end_time = datetime.now()
-        lines.append("-" * 60)
-        lines.append(f"  End: {end_time.isoformat()}")
-        lines.append(f"  Duration: {self.duration:.2f}s")
-        lines.append(f"  Summary: {self.collector.total} total"
-                     f"  |  PASS: {self.collector.by_status.get(TestStatus.PASS, 0)}"
-                     f"  |  FAIL: {self.collector.by_status.get(TestStatus.FAIL, 0)}"
-                     f"  |  WARN: {self.collector.by_status.get(TestStatus.WARN, 0)}"
-                     f"  |  ERROR: {self.collector.by_status.get(TestStatus.ERROR, 0)}")
-        lines.append("=" * 60)
-        with open(path, "w", encoding="utf-8") as f:
-            f.write("\n".join(lines) + "\n")
-        return path
-
     def to_json(self, output_dir: str) -> str:
         """Write JSON report to output_dir and return the file path."""
         path = Path(output_dir) / f"websec_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
