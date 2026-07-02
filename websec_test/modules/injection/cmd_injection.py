@@ -13,8 +13,7 @@ class CmdInjectionModule:
     """Test for command injection vulnerabilities."""
 
     def _extract_form_inputs(self, html: str) -> list[Endpoint]:
-        return [Endpoint(url=ep["url"], method="GET", param_names=ep["param_names"])
-                for ep in parse_form_inputs(html)]
+        return parse_form_inputs(html)
 
     def discover(self, client: SessionClient, target: str):
         resp = client.get(target.rstrip("/") + "/")

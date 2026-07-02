@@ -21,10 +21,10 @@ class Endpoint:
     is_api: bool = False
     forms: List[Form] = field(default_factory=list)
 
-def parse_form_inputs(html: str) -> list[dict]:
+def parse_form_inputs(html: str) -> list[Endpoint]:
     """Extract GET form action URLs and input field names from HTML.
 
-    Returns a list of dicts with keys ``url``, ``method``, and ``param_names``.
+    Returns a list of Endpoint objects with populated forms.
     """
     import re
     endpoints = []
@@ -40,5 +40,7 @@ def parse_form_inputs(html: str) -> list[dict]:
         method = method_match.group(1).upper() if method_match else "GET"
         input_names = re.findall(r'<input[^>]*name=["\']([^"\']+)[^>]*>', form_html)
         if input_names:
-            endpoints.append({"url": action, "method": method, "param_names": input_names})
+            fields = [FormField(name=n, type="text") for n in input_names]
+            form = Form(action=action, method=method, fields=fields)
+            endpoints.append(Endpoint(url=action, method=method, param_names=input_names, forms=[form]))
     return endpoints
