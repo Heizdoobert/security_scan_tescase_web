@@ -1,6 +1,5 @@
 """Tests for CLI entry point."""
 import sys
-import tempfile
 import pytest
 from unittest import mock
 from websec_test.main import parse_args, run, main
@@ -54,24 +53,6 @@ def test_main_entry(mock_run, mock_parse):
         secops=None, log=None
     )
     assert hasattr(main, "main")
-
-
-def test_parse_args_log_defaults_to_none():
-    """--log not provided should store None."""
-    args = parse_args(["--target", "http://test.local"])
-    assert args.log is None
-
-
-def test_parse_args_log_without_path():
-    """--log without a path should default to 'log.txt'."""
-    args = parse_args(["--target", "http://test.local", "--log"])
-    assert args.log == "log.txt"
-
-
-def test_parse_args_log_with_path():
-    """--log /path/to/log.txt should store the path."""
-    args = parse_args(["--target", "http://test.local", "--log", "custom.log"])
-    assert args.log == "custom.log"
 
 
 def test_parse_args_secops_defaults_to_cwd():

@@ -11,6 +11,7 @@ from websec_test.engine import Sequence, ModuleAdapter, Blackboard, CheckTreeBui
 
 # Module registry — dynamically discovered from websec_test/modules/
 from websec_test.engine.loader import discover_modules
+from websec_test.discovery.crawler import PlaywrightCrawler
 
 ALL_MODULES, MODULE_FACTORIES, SHORT_NAME_MAP = discover_modules()
 ALL_MODULES = sorted(set(ALL_MODULES) | set(SHORT_NAME_MAP.keys()))
@@ -29,8 +30,6 @@ def parse_args(argv=None):
     parser.add_argument("--all", action="store_true", help="Run all test modules")
     parser.add_argument("--output", default="./reports", help="Output directory for JSON reports")
     parser.add_argument("--timeout", type=int, default=10, help="Per-request timeout in seconds")
-    parser.add_argument("--log", nargs="?", const="log.txt", default=None,
-                        help="Path to write plain-text log (default: log.txt)")
     parser.add_argument("--check", help="Run a single check (format: module/check_name, "
                         "e.g. configuration.headers/check_strict_transport_security)")
     parser.add_argument("--discover", action="store_true",
@@ -54,35 +53,7 @@ def parse_args(argv=None):
     return args
 
 
-def run_discover(client, target, module_map):
-    """Discover-mode: run discovery only, print endpoints, no test execution."""
-    total_endpoints = 0
-    module_count = len(module_map)
 
-    print(f"\n  {'='*56}")
-    print(f"  Discover mode for target: {target}")
-    print(f"  {'='*56}\n")
-
-    for name, mod in module_map.items():
-        eps = mod.discover(client, target)
-        if not eps:
-            print(f"  Module: {name}")
-            print(f"    [No endpoints discovered]\n")
-            continue
-
-        total_endpoints += len(eps)
-
-        print(f"  Module: {name}")
-        print(f"    Discovered endpoints ({len(eps)}):")
-        for ep in eps:
-            print(f"      {ep.method or 'GET'} {ep.url}")
-        print()
-
-    print(f"  {'='*56}")
-    print(f"  Discover mode complete: {module_count} modules, "
-          f"{total_endpoints} endpoints discovered")
-    print(f"  {'='*56}")
-    print("  Use --all or --modules <names> to run tests against these endpoints.\n")
 
 
 def run(args):
@@ -125,8 +96,15 @@ def run(args):
     # Build and execute Behavior Tree
     blackboard = Blackboard(client=client, target=target)
 
+    # Global Discovery
+    print("[*] Running Global Discovery...")
+    crawler = PlaywrightCrawler(target)
+    discovered_endpoints = crawler.crawl()
+    print(f"[+] Discovered {len(discovered_endpoints)} endpoints/forms.")
+
     if args.discover:
-        run_discover(client, target, module_map)
+        for ep in discovered_endpoints:
+            print(f"  {ep.method} {ep.url}")
         sys.exit(0)
 
     if args.check:
@@ -141,7 +119,7 @@ def run(args):
             sys.exit(1)
         cls = MODULE_FACTORIES[module_name]
         mod = cls(credentials=args.auth, target=target) if module_name == "auth" else cls()
-        endpoints = mod.discover(client, target)
+        endpoints = discovered_endpoints
         results = mod.test(client, target, endpoints)
         matching = [r for r in (results or []) if r.test_name == check_name]
         if not matching:
@@ -154,7 +132,7 @@ def run(args):
     else:
         children = []
         for name, mod in module_map.items():
-            eps = mod.discover(client, target)
+            eps = discovered_endpoints
             check_methods = [m for m in dir(mod) if m.startswith("check_")]
             if check_methods:
                 children.append(CheckTreeBuilder.build(mod, name, eps))
@@ -174,10 +152,6 @@ def run(args):
 
     json_path = reporter.to_json(args.output)
     print(f"\n[*] JSON report saved to: {json_path}")
-
-    if args.log:
-        log_path = reporter.to_log(args.log)
-        print(f"[*] Log saved to: {log_path}")
 
     if args.dashboard or args.open:
         dash_path = reporter.to_dashboard(args.output, open_browser=args.open)
