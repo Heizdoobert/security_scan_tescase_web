@@ -93,8 +93,16 @@ def run(args):
         if name in MODULE_FACTORIES
     }
 
+    reporter = Reporter(collector, target=target, duration=0.0)
+
+    def on_test_result(r):
+        collector.add(r)
+        if args.dashboard or args.open:
+            reporter.duration = time.time() - start
+            reporter.to_dashboard(args.output, open_browser=False, live=True)
+
     # Build and execute Behavior Tree
-    blackboard = Blackboard(client=client, target=target)
+    blackboard = Blackboard(client=client, target=target, on_result=on_test_result)
 
     # Global Discovery
     print("[*] Running Global Discovery...")
@@ -132,29 +140,27 @@ def run(args):
     else:
         children = []
         for name, mod in module_map.items():
-            eps = discovered_endpoints
+            eps = mod.discover(client, target) if hasattr(mod, 'discover') else discovered_endpoints
             check_methods = [m for m in dir(mod) if m.startswith("check_")]
             if check_methods:
                 children.append(CheckTreeBuilder.build(mod, name, eps))
             else:
                 children.append(ModuleAdapter(name, mod))
-        root = Sequence("scan", children=children)
+        from websec_test.engine.nodes import Parallel
+        root = Parallel("scan", children=children)
         root.tick(blackboard)
 
-    for r in blackboard.results:
-        collector.add(r)
-
     duration = time.time() - start
+    reporter.duration = duration
 
     # Report
-    reporter = Reporter(collector, target=target, duration=duration)
     reporter.to_terminal()
 
     json_path = reporter.to_json(args.output)
     print(f"\n[*] JSON report saved to: {json_path}")
 
     if args.dashboard or args.open:
-        dash_path = reporter.to_dashboard(args.output, open_browser=args.open)
+        dash_path = reporter.to_dashboard(args.output, open_browser=args.open, live=False)
         print(f"[*] Dashboard saved to: {dash_path}")
 
     # Exit code: non-zero if any FAIL or ERROR

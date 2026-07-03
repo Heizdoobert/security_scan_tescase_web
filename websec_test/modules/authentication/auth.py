@@ -68,7 +68,15 @@ class AuthModule:
         if 300 <= response.status_code < 400:
             return True
         body = response.text.lower()
-        success_markers = ("welcome", "dashboard", "admin", "logout", "profile")
+        
+        # If the page shows a clear authentication error, it's not a success
+        error_markers = ("username or password wrong", "incorrect password", "invalid credentials", "login failed")
+        if any(err in body for err in error_markers):
+            return False
+
+        success_markers = ("dashboard", "logout", "profile")
+        # 'welcome' is too generic (e.g. "Welcome back!" on the login page itself)
+        
         return response.status_code == 200 and any(marker in body for marker in success_markers)
 
     def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):

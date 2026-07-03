@@ -25,11 +25,13 @@ python -m websec_test.main --target http://localhost:8080/ --all
 
 5. Check the result in the terminal summary and in the JSON report written to `./reports/websec_report_<timestamp>.json`.
 
-6. Optionally generate an HTML dashboard:
+6. Generate an interactive dashboard (3 files):
 
 ```bash
-python -m websec_test.main --target http://localhost:8080/ --all --dashboard
+python -m websec_test.main --target http://localhost:8080/ --all --dashboard --open
 ```
+
+Writes `dashboard_<ts>.html` + `.css` + `.js` to `./reports/` and opens it in your browser. Use the collapsible rows (click triangle) to see Expected, Actual, Error Details, Endpoint, and Fix for every check. Filter by status checkbox, search text, module, or severity. Click column headers to sort.
 
 ## Common Commands
 

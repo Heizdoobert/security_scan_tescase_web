@@ -65,28 +65,31 @@ def find_free_port():
 
 
 @pytest.fixture(scope="module")
-def vulnerable_server():
+def vulnerable_server(tmp_path_factory):
     """Start a vulnerable Flask server on a random port."""
     port = find_free_port()
     # Write the app to a temp file and run it
-    with tempfile.TemporaryDirectory() as tmp:
-        app_path = Path(tmp) / "vuln_app.py"
-        app_path.write_text(VULNERABLE_APP_CODE)
+    tmp = tmp_path_factory.mktemp("vuln_app")
+    app_path = tmp / "vuln_app.py"
+    app_path.write_text(VULNERABLE_APP_CODE)
 
-        proc = subprocess.Popen(
-            [sys.executable, str(app_path)],
-            env={**__import__('os').environ, "FLASK_RUN_PORT": str(port)},
-            cwd=tmp,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        time.sleep(2)
-        target = f"http://localhost:{port}"
+    proc = subprocess.Popen(
+        [sys.executable, str(app_path)],
+        env={**__import__('os').environ, "FLASK_RUN_PORT": str(port)},
+        cwd=str(tmp),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    time.sleep(2)
+    target = f"http://localhost:{port}"
+    try:
+        yield target
+    finally:
+        proc.terminate()
         try:
-            yield target
-        finally:
-            proc.terminate()
-            proc.wait()
+            proc.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            proc.kill()
 
 
 def test_integration_full_run(vulnerable_server):

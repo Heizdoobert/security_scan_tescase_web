@@ -9,13 +9,18 @@ class NodeStatus(Enum):
     RUNNING = "running"
 
 class Blackboard:
-    def __init__(self, client, target):
+    def __init__(self, client, target, on_result=None):
         self.client = client
         self.target = target
         self.results = []
         self._store = {}
+        self.on_result = on_result
     def add_result(self, result):
+        if not getattr(result, 'http_log', None) and hasattr(self.client, 'last_log'):
+            result.http_log = self.client.last_log
         self.results.append(result)
+        if self.on_result:
+            self.on_result(result)
     def get(self, key, default=None):
         return self._store.get(key, default)
     def set(self, key, value):
