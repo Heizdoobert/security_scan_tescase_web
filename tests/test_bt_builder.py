@@ -1,126 +1,59 @@
-"""Tests for CheckTreeBuilder and CheckSpec."""
+"""Tests for CheckTreeBuilder."""
 import pytest
-from websec_test.engine.builder import CheckSpec, CheckTreeBuilder
-from websec_test.engine.nodes import Sequence, Parallel, NodeStatus, Blackboard
-from websec_test.engine.adapters import CheckAdapter, DiscoverAction
-from websec_test.results.models import Severity
+from websec_test.engine.nodes import NodeStatus, Blackboard, Sequence, Selector
+from websec_test.engine.builder import CheckTreeBuilder
+from websec_test.engine.decorators import Retry
+from websec_test.results.models import TestResult, TestStatus, Severity
 
 
-def make_check(name, depends_on=None):
-    return CheckSpec(name, lambda c, t, bb: None,
-                     severity=Severity.LOW, module_name="test",
-                     depends_on=depends_on)
+class MockCheckModule:
+    def __init__(self):
+        self.discover_called = False
+    def discover(self, client, target):
+        self.discover_called = True
+        return [type("EP", (), {"url": "/", "path": "/"})()]
+    def check_pass(self, client, target, endpoint):
+        return TestResult(module="mock", test_name="check_pass", status=TestStatus.PASS,
+                          severity=Severity.LOW, endpoint="/", evidence="ok")
+    def check_fail(self, client, target, endpoint):
+        return TestResult(module="mock", test_name="check_fail", status=TestStatus.FAIL,
+                          severity=Severity.HIGH, endpoint="/", evidence="broken")
 
 
-def make_node(name):
-    return CheckAdapter(name, lambda c, t, bb: None, module_name="test")
+@pytest.fixture
+def bb():
+    return Blackboard(client="x", target="http://x")
 
 
-# ── CheckSpec ───────────────────────────────────────────────────────────
-
-def test_check_spec_defaults():
-    spec = CheckSpec("my_check", lambda: None, severity=Severity.HIGH)
-    assert spec.name == "my_check"
-    assert spec.depends_on is None
-    assert spec.module_name == ""
-
-
-def test_check_spec_full():
-    spec = CheckSpec("full", lambda: None, severity=Severity.CRITICAL,
-                     depends_on=["other"], module_name="mod")
-    assert spec.depends_on == ["other"]
-    assert spec.module_name == "mod"
+def test_builder_creates_sequence_tree(bb):
+    module = MockCheckModule()
+    eps = [type("EP", (), {"url": "/", "path": "/"})()]
+    tree = CheckTreeBuilder.build(module, "mock_module", eps)
+    assert tree.name == "mock_module"
+    assert isinstance(tree, Sequence)
+    assert len(tree.children) == 1
 
 
-# ── CheckTreeBuilder._group_by_dependency ──────────────────────────────
-
-def test_group_no_deps():
-    specs = [make_check("a"), make_check("b")]
-    nodes = {s.name: make_node(s.name) for s in specs}
-    groups = CheckTreeBuilder._group_by_dependency(specs, nodes)
-    assert len(groups) == 1
-    assert len(groups[0]) == 2
-
-
-def test_group_with_deps():
-    specs = [
-        make_check("a"),
-        make_check("b", depends_on=["a"]),
-        make_check("c", depends_on=["a"]),
-    ]
-    nodes = {s.name: make_node(s.name) for s in specs}
-    groups = CheckTreeBuilder._group_by_dependency(specs, nodes)
-    assert len(groups) == 2
-    assert len(groups[0]) == 1  # a
-    assert len(groups[1]) == 2  # b, c
+def test_builder_children_wrapped_in_retry(bb):
+    module = MockCheckModule()
+    eps = [type("EP", (), {"url": "/", "path": "/"})()]
+    tree = CheckTreeBuilder.build(module, "mock_module", eps)
+    endpoint_seq = tree.children[0]
+    for child in endpoint_seq.children:
+        assert isinstance(child, Retry)
 
 
-def test_group_chained_deps():
-    specs = [
-        make_check("a"),
-        make_check("b", depends_on=["a"]),
-        make_check("c", depends_on=["b"]),
-    ]
-    nodes = {s.name: make_node(s.name) for s in specs}
-    groups = CheckTreeBuilder._group_by_dependency(specs, nodes)
-    assert len(groups) == 3
-    assert len(groups[0]) == 1  # a
-    assert len(groups[1]) == 1  # b
-    assert len(groups[2]) == 1  # c
+def test_builder_supports_selector_groups(bb):
+    module = MockCheckModule()
+    module.SELECTOR_GROUPS = {"tech_group": ["check_pass"]}
+    eps = [type("EP", (), {"url": "/", "path": "/"})()]
+    tree = CheckTreeBuilder.build(module, "mock_module", eps)
+    endpoint_seq = tree.children[0]
+    assert isinstance(endpoint_seq.children[0], Selector)
 
 
-def test_group_circular_deps():
-    """Circular deps should still resolve (all in one group)."""
-    specs = [
-        make_check("a", depends_on=["b"]),
-        make_check("b", depends_on=["a"]),
-    ]
-    nodes = {s.name: make_node(s.name) for s in specs}
-    groups = CheckTreeBuilder._group_by_dependency(specs, nodes)
-    # Both end up in one group rather than hanging
-    assert len(groups) >= 1
-    all_names = set()
-    for g in groups:
-        for n in g:
-            all_names.add(n.name)
-    assert all_names == {"a", "b"}
-
-
-# ── CheckTreeBuilder.build_module ───────────────────────────────────────
-
-def test_build_module_no_deps():
-    spec = make_check("only_check")
-    specs = [spec]
-    discover = lambda c, t: ["/"]
-    root = CheckTreeBuilder.build_module("test_mod", discover, specs)
-
-    assert isinstance(root, Sequence)
-    assert root.name == "test_mod"
-    assert isinstance(root.children[0], DiscoverAction)
-
-    # Second child should be Parallel (single group, no deps)
-    check_group = root.children[1]
-    assert isinstance(check_group, Parallel)
-    assert check_group.name == "test_mod_checks"
-    assert len(check_group.children) == 1
-    assert isinstance(check_group.children[0], CheckAdapter)
-
-
-def test_build_module_with_deps():
-    specs = [
-        make_check("a"),
-        make_check("b", depends_on=["a"]),
-    ]
-    discover = lambda c, t: ["/"]
-    root = CheckTreeBuilder.build_module("test_mod", discover, specs)
-
-    assert isinstance(root, Sequence)
-    assert isinstance(root.children[0], DiscoverAction)
-
-    # Second child should be Sequence of Parallel groups
-    check_group = root.children[1]
-    assert isinstance(check_group, Sequence)
-    assert check_group.name == "test_mod_checks"
-    assert len(check_group.children) == 2
-    assert isinstance(check_group.children[0], Parallel)
-    assert isinstance(check_group.children[1], Parallel)
+def test_builder_empty_endpoints(bb):
+    module = MockCheckModule()
+    tree = CheckTreeBuilder.build(module, "empty", [])
+    assert tree.name == "empty"
+    assert len(tree.children) == 0

@@ -49,21 +49,6 @@ def test_json_has_timestamp():
         assert "websec_report_" in path
 
 
-def test_log_output_contains_results():
-    c = _collector_with_results()
-    reporter = Reporter(c, target="http://test.local")
-    with tempfile.TemporaryDirectory() as tmp:
-        log_path = Path(tmp) / "test.log"
-        result = reporter.to_log(str(log_path))
-        assert Path(result).exists()
-        content = log_path.read_text()
-        assert "PASS" in content
-        assert "FAIL" in content
-        assert "hsts" in content
-        assert "Summary: 2 total" in content
-        assert "missing header" in content
-
-
 def test_terminal_output_basic(capsys):
     c = _collector_with_results()
     reporter = Reporter(c, target="http://test.local")

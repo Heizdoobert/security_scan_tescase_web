@@ -1,6 +1,6 @@
 """Tests for security headers module."""
 import responses
-from websec_test.modules.headers import HeadersModule
+from websec_test.modules.configuration.headers import HeadersModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 

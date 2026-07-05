@@ -1,6 +1,6 @@
 """Tests for information disclosure module."""
 import responses
-from websec_test.modules.disclosure import DisclosureModule
+from websec_test.modules.configuration.disclosure import DisclosureModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 

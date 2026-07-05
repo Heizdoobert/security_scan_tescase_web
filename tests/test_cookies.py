@@ -1,6 +1,6 @@
 """Tests for cookie security module."""
 import responses
-from websec_test.modules.cookies import CookiesModule
+from websec_test.modules.configuration.cookies import CookiesModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 

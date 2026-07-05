@@ -1,0 +1,210 @@
+"""NoSQL injection testing module.
+
+Tests for NoSQL injection via MongoDB operator payloads in three formats:
+URL-encoded (PHP-style), JSON body, and raw query string.
+"""
+from urllib.parse import urlencode
+
+from websec_test.client.session import SessionClient
+from websec_test.config.payloads import NOSQLI_PAYLOADS
+from websec_test.modules._shared import Endpoint, parse_form_inputs
+from websec_test.results.models import TestResult, TestStatus, Severity
+
+
+class NosqlModule:
+    """Test for NoSQL injection vulnerabilities using MongoDB operators."""
+
+
+
+    def test(self, client: SessionClient, target: str, endpoints: list[Endpoint]):
+        """Legacy test method — kept for ModuleAdapter backward compat."""
+        return [r for ep in endpoints for r in [
+            self.check_nosql_injection(client, target, ep),
+        ]]
+
+    def check_nosql_injection(self, client, target, endpoint):
+        import requests
+        if not endpoint.forms and not endpoint.param_names:
+            return None
+
+        all_params = set(endpoint.param_names)
+        for form in endpoint.forms:
+            all_params.update(f.name for f in form.fields)
+
+        bypass_keywords = ["welcome", "dashboard", "login successful",
+                           "logged in", "authenticated", "success"]
+        for param in all_params:
+            base_url = f"{target.rstrip('/')}{endpoint.url}"
+            baseline_url = f"{base_url}?{urlencode({param: 'invalid__test__value'})}"
+            try:
+                baseline = client.get(baseline_url)
+                baseline_len = len(baseline.text)
+            except requests.exceptions.ConnectionError:
+                continue
+
+            def url_encoded_req(p):
+                url = f"{base_url}?{self._php_style_params(param, p)}"
+                return client.get(url), url
+
+            result = self._try_nosql_format(
+                client, NOSQLI_PAYLOADS["auth_bypass"],
+                url_encoded_req, baseline_len, baseline.text,
+                bypass_keywords, "URL-encoded",
+            )
+            if result:
+                return result
+
+            def json_body_req(p):
+                return (
+                    client.post(base_url, json={param: p},
+                                headers={"Content-Type": "application/json"}),
+                    base_url,
+                )
+
+            result = self._try_nosql_format(
+                client, NOSQLI_PAYLOADS["auth_bypass"],
+                json_body_req, baseline_len, baseline.text,
+                bypass_keywords, "JSON body",
+            )
+            if result:
+                return result
+
+            def query_string_req(p):
+                params = {param: p}
+                url = f"{base_url}?{urlencode(params)}"
+                return client.get(url), url
+
+            result = self._try_nosql_format(
+                client, NOSQLI_PAYLOADS["field_injection"],
+                query_string_req, baseline_len, baseline.text,
+                bypass_keywords, "query string",
+            )
+            if result:
+                return result
+
+        return TestResult(
+            module="nosql", test_name="nosql_injection",
+            status=TestStatus.PASS, severity=Severity.CRITICAL,
+            endpoint=endpoint.url,
+            evidence="No NoSQL injection bypass detected",
+            recommendation="No action needed",
+        )
+
+    def _test_nosqli(self, client: SessionClient, target: str, endpoints):
+        import requests
+        results = []
+        bypass_keywords = ["welcome", "dashboard", "login successful",
+                           "logged in", "authenticated", "success"]
+
+        for ep in endpoints:
+            if not ep.forms and not ep.param_names:
+                continue
+
+            all_params = set(ep.param_names)
+            for form in ep.forms:
+                all_params.update(f.name for f in form.fields)
+
+            for param in all_params:
+                base_url = f"{target.rstrip('/')}{ep.url}"
+                baseline_url = f"{base_url}?{urlencode({param: 'invalid__test__value'})}"
+                try:
+                    baseline = client.get(baseline_url)
+                    baseline_len = len(baseline.text)
+                except requests.exceptions.ConnectionError:
+                    continue
+
+                def url_encoded_req(p):
+                    url = f"{base_url}?{self._php_style_params(param, p)}"
+                    return client.get(url), url
+
+                result = self._try_nosql_format(
+                    client, NOSQLI_PAYLOADS["auth_bypass"],
+                    url_encoded_req, baseline_len, baseline.text,
+                    bypass_keywords, "URL-encoded",
+                )
+                if result:
+                    results.append(result)
+                    continue
+
+                def json_body_req(p):
+                    return (
+                        client.post(base_url, json={param: p},
+                                    headers={"Content-Type": "application/json"}),
+                        base_url,
+                    )
+
+                result = self._try_nosql_format(
+                    client, NOSQLI_PAYLOADS["auth_bypass"],
+                    json_body_req, baseline_len, baseline.text,
+                    bypass_keywords, "JSON body",
+                )
+                if result:
+                    results.append(result)
+                    continue
+
+                def query_string_req(p):
+                    params = {param: p}
+                    url = f"{base_url}?{urlencode(params)}"
+                    return client.get(url), url
+
+                result = self._try_nosql_format(
+                    client, NOSQLI_PAYLOADS["field_injection"],
+                    query_string_req, baseline_len, baseline.text,
+                    bypass_keywords, "query string",
+                )
+                if result:
+                    results.append(result)
+                    continue
+
+                results.append(TestResult(
+                    module="nosql", test_name="nosql_injection",
+                    status=TestStatus.PASS, severity=Severity.CRITICAL,
+                    endpoint=ep.url,
+                    evidence="No NoSQL injection bypass detected",
+                    recommendation="No action needed",
+                ))
+
+        return results
+
+    @staticmethod
+    def _is_nosql_bypass(resp, baseline_len, baseline_text, bypass_keywords):
+        text_lower = resp.text.lower()
+        if any(kw in text_lower for kw in bypass_keywords):
+            return True
+        if resp.status_code == 500:
+            return True
+        if abs(len(resp.text) - baseline_len) > 5:
+            return True
+        return False
+
+    def _try_nosql_format(self, client, payloads, perform_request,
+                          baseline_len, baseline_text, bypass_keywords, format_name):
+        import requests
+        for payload in payloads:
+            op_key = list(payload.keys())[0] if payload else ""
+            try:
+                resp, endpoint_url = perform_request(payload)
+            except (requests.exceptions.ConnectionError, requests.ConnectTimeout):
+                continue
+            if self._is_nosql_bypass(resp, baseline_len, baseline_text, bypass_keywords):
+                return TestResult(
+                    module="nosql", test_name="nosql_injection",
+                    status=TestStatus.FAIL, severity=Severity.CRITICAL,
+                    endpoint=endpoint_url,
+                    evidence=f"NoSQL bypass via {format_name} operator '{op_key}': {resp.text[:150]}",
+                    recommendation="Sanitize and validate all user input; use parameterized MongoDB queries",
+                )
+        return None
+
+    @staticmethod
+    def _php_style_params(param, payload):
+        from urllib.parse import quote
+        parts = []
+        for key, value in payload.items():
+            if isinstance(value, list):
+                for i, v in enumerate(value):
+                    parts.append(f"{param}[{key}][{i}]={quote(str(v))}")
+            else:
+                parts.append(f"{param}[{key}]={quote(str(value))}")
+        return "&".join(parts)
+

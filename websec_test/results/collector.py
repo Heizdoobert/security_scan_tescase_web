@@ -28,16 +28,4 @@ class ResultCollector:
             counts[r.status] += 1
         return dict(counts)
 
-    @property
-    def by_severity(self) -> dict[Severity, int]:
-        counts = defaultdict(int)
-        for r in self.results:
-            counts[r.severity] += 1
-        return dict(counts)
 
-    def by_module(self, module_name: str) -> dict[str, int]:
-        counts = {"pass": 0, "fail": 0, "warn": 0, "error": 0}
-        for r in self.results:
-            if r.module == module_name:
-                counts[r.status.value] += 1
-        return counts

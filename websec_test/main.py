@@ -7,41 +7,14 @@ from websec_test.client.session import SessionClient
 from websec_test.results.collector import ResultCollector
 from websec_test.results.models import TestStatus
 from websec_test.results.reporter import Reporter
-from websec_test.engine import Sequence, ModuleAdapter, CheckTreeBuilder, CheckSpec, Blackboard
+from websec_test.engine import Sequence, ModuleAdapter, Blackboard, CheckTreeBuilder
 
-# Module registry — maps name to a factory callable(credentials, target) returning an instance
-from websec_test.modules.headers import HeadersModule, headers_check_specs
-from websec_test.modules.auth import AuthModule, auth_check_specs
-from websec_test.modules.csrf import CSRFModule
-from websec_test.modules.injection import InjectionModule
-from websec_test.modules.authz import AuthorizationModule
-from websec_test.modules.ssl_tls import SslTlsModule
-from websec_test.modules.cors import CorsModule, cors_check_specs
-from websec_test.modules.cookies import CookiesModule
-from websec_test.modules.disclosure import DisclosureModule
-from websec_test.modules.methods import MethodsModule
+# Module registry — dynamically discovered from websec_test/modules/
+from websec_test.engine.loader import discover_modules
+from websec_test.discovery.crawler import PlaywrightCrawler
 
-ALL_MODULES = ["headers", "auth", "csrf", "injection", "authz",
-                "ssl_tls", "cors", "cookies", "disclosure", "methods"]
-
-CHECK_LEVEL_MODULES = {"headers", "auth", "cors"}
-
-MODULE_FACTORIES: dict[str, type] = {
-    "headers": HeadersModule,
-    "csrf": CSRFModule,
-    "injection": InjectionModule,
-    "authz": AuthorizationModule,
-    "ssl_tls": SslTlsModule,
-    "cors": CorsModule,
-    "cookies": CookiesModule,
-    "disclosure": DisclosureModule,
-    "methods": MethodsModule,
-}
-CHECK_SPEC_REGISTRY: dict[str, list[CheckSpec]] = {
-    "headers": headers_check_specs(),
-    "auth": auth_check_specs(),
-    "cors": cors_check_specs(),
-}
+ALL_MODULES, MODULE_FACTORIES, SHORT_NAME_MAP = discover_modules()
+ALL_MODULES = sorted(set(ALL_MODULES) | set(SHORT_NAME_MAP.keys()))
 
 
 def parse_args(argv=None):
@@ -52,20 +25,35 @@ def parse_args(argv=None):
     parser.add_argument("--auth", help="Credentials in user:pass format for authenticated tests")
     parser.add_argument("--modules", nargs="+", choices=ALL_MODULES,
                         help="Specific modules to run (default: all)")
+    parser.add_argument("--scope", choices=["quick", "full", "api"],
+                        help="Quick (headers/cookies/ssl), full (all), or API-focused modules")
     parser.add_argument("--all", action="store_true", help="Run all test modules")
     parser.add_argument("--output", default="./reports", help="Output directory for JSON reports")
     parser.add_argument("--timeout", type=int, default=10, help="Per-request timeout in seconds")
-    parser.add_argument("--log", nargs="?", const="log.txt", default=None,
-                        help="Path to write plain-text log (default: log.txt)")
-    parser.add_argument("--check-level", action="store_true",
-                        help="Use per-check Behavior Tree nodes (opt-in modules: headers, auth, cors)")
+    parser.add_argument("--check", help="Run a single check (format: module/check_name, "
+                        "e.g. configuration.headers/check_strict_transport_security)")
+    parser.add_argument("--discover", action="store_true",
+                        help="Run discovery only — show endpoints and checks without testing")
     parser.add_argument("-v", "--verbose", action="store_true", help="Increase output verbosity")
     parser.add_argument("--secops", nargs="?", const=".", default=None,
                         help="Run SAST/dependency/compliance scan on a project directory")
+    parser.add_argument("--dashboard", action="store_true",
+                        help="Generate HTML dashboard report")
+    parser.add_argument("--open", action="store_true",
+                        help="Open HTML dashboard in browser (implies --dashboard)")
     args = parser.parse_args(argv)
     if args.all:
         args.modules = ALL_MODULES
+    if args.scope == "quick":
+        args.modules = [m for m in ALL_MODULES if m.startswith(("configuration.", "injection.sqli"))]
+    elif args.scope == "api":
+        args.modules = [m for m in ALL_MODULES if m.startswith(("authentication.", "injection."))]
+    elif args.scope == "full":
+        args.modules = ALL_MODULES
     return args
+
+
+
 
 
 def run(args):
@@ -90,11 +78,14 @@ def run(args):
     modules_to_run = args.modules or ALL_MODULES
     start = time.time()
 
-    # Build module registry from selected modules — use factory dict for uniformity
+    # Build module registry from discovered factories
+    modules_to_run = [SHORT_NAME_MAP.get(m, m) for m in modules_to_run]
+
     def _make_module(name: str) -> object:
+        cls = MODULE_FACTORIES[name]
         if name == "auth":
-            return AuthModule(credentials=args.auth, target=target)
-        return MODULE_FACTORIES[name]()
+            return cls(credentials=args.auth, target=target)
+        return cls()
 
     module_map = {
         name: _make_module(name)
@@ -105,35 +96,51 @@ def run(args):
     # Build and execute Behavior Tree
     blackboard = Blackboard(client=client, target=target)
 
-    if args.check_level:
-        children = []
-        for name in module_map:
-            if name == "headers":
-                children.append(CheckTreeBuilder.build_module(
-                    "headers",
-                    lambda c, t: HeadersModule().discover(c, t),
-                    headers_check_specs()
-                ))
-            elif name == "auth":
-                children.append(CheckTreeBuilder.build_module(
-                    "auth",
-                    lambda c, t, _auth=args.auth, _target=target: AuthModule(credentials=_auth, target=_target).discover(c, t),
-                    auth_check_specs()
-                ))
-            elif name == "cors":
-                children.append(CheckTreeBuilder.build_module(
-                    "cors",
-                    lambda c, t: CorsModule().discover(c, t),
-                    cors_check_specs()
-                ))
-            else:
-                children.append(ModuleAdapter(name, module_map[name]))
-    else:
-        children = [ModuleAdapter(name, mod) for name, mod in module_map.items()]
+    # Global Discovery
+    print("[*] Running Global Discovery...")
+    crawler = PlaywrightCrawler(target)
+    discovered_endpoints = crawler.crawl()
+    print(f"[+] Discovered {len(discovered_endpoints)} endpoints/forms.")
 
-    if children:
+    if args.discover:
+        for ep in discovered_endpoints:
+            print(f"  {ep.method} {ep.url}")
+        sys.exit(0)
+
+    if args.check:
+        if "/" not in args.check:
+            print("[!] --check must be in format: module/check_name "
+                  "(e.g. configuration.headers/check_strict_transport_security)")
+            sys.exit(1)
+        module_name, check_name = args.check.split("/", 1)
+        module_name = SHORT_NAME_MAP.get(module_name, module_name)
+        if module_name not in MODULE_FACTORIES:
+            print(f"[!] Unknown module: {module_name}")
+            sys.exit(1)
+        cls = MODULE_FACTORIES[module_name]
+        mod = cls(credentials=args.auth, target=target) if module_name == "auth" else cls()
+        endpoints = discovered_endpoints
+        results = mod.test(client, target, endpoints)
+        matching = [r for r in (results or []) if r.test_name == check_name]
+        if not matching:
+            print(f"[!] No result for check '{check_name}' in module '{module_name}'")
+            sys.exit(1)
+        for r in matching:
+            blackboard.add_result(r)
+        print(f"[*] Running single check: {args.check}")
+
+    else:
+        children = []
+        for name, mod in module_map.items():
+            eps = discovered_endpoints
+            check_methods = [m for m in dir(mod) if m.startswith("check_")]
+            if check_methods:
+                children.append(CheckTreeBuilder.build(mod, name, eps))
+            else:
+                children.append(ModuleAdapter(name, mod))
         root = Sequence("scan", children=children)
         root.tick(blackboard)
+
     for r in blackboard.results:
         collector.add(r)
 
@@ -146,9 +153,9 @@ def run(args):
     json_path = reporter.to_json(args.output)
     print(f"\n[*] JSON report saved to: {json_path}")
 
-    if args.log:
-        log_path = reporter.to_log(args.log)
-        print(f"[*] Log saved to: {log_path}")
+    if args.dashboard or args.open:
+        dash_path = reporter.to_dashboard(args.output, open_browser=args.open)
+        print(f"[*] Dashboard saved to: {dash_path}")
 
     # Exit code: non-zero if any FAIL or ERROR
     fail_count = collector.by_status.get(TestStatus.FAIL, 0)
@@ -168,10 +175,10 @@ def run_secops(project_path: str):
     print(f"  Senior SecOps Toolkit — {resolved}")
     print(f"{'='*60}")
 
-    # ── Phase 1: SAST scan ──────────────────────────────────────────
-    print(f"\n{'─'*60}")
+    # ── Phase 1: SAST scan ──
+    print(f"\n{'='*60}")
     print("  Phase 1: SAST Security Scan")
-    print(f"{'─'*60}")
+    print(f"{'='*60}")
     scanner = SecurityScanner(resolved, min_severity="high")
     findings = scanner.scan()
     if not findings:
@@ -185,10 +192,10 @@ def run_secops(project_path: str):
           f" high={sum(1 for x in findings if x.severity=='high')})")
     scan_code = SecurityScanner.exit_code(findings)
 
-    # ── Phase 2: Dependency assessment ──────────────────────────────
-    print(f"\n{'─'*60}")
+    # ── Phase 2: Dependency assessment ──
+    print(f"\n{'='*60}")
     print("  Phase 2: Dependency Vulnerability Assessment")
-    print(f"{'─'*60}")
+    print(f"{'='*60}")
     assessor = VulnerabilityAssessor(resolved, min_severity="high")
     dep_result = assessor.assess()
     if dep_result.count == 0:
@@ -202,10 +209,10 @@ def run_secops(project_path: str):
           f"  (critical={dep_result.critical_count}, high={dep_result.high_count})")
     dep_code = VulnerabilityAssessor.exit_code(dep_result)
 
-    # ── Phase 3: Compliance check ───────────────────────────────────
-    print(f"\n{'─'*60}")
+    # ── Phase 3: Compliance check ──
+    print(f"\n{'='*60}")
     print("  Phase 3: Compliance Framework Check")
-    print(f"{'─'*60}")
+    print(f"{'='*60}")
     checker = ComplianceChecker(resolved)
     comp_result = checker.check()
     for fw in comp_result.frameworks:

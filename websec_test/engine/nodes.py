@@ -39,6 +39,7 @@ class Sequence(Node):
                 return status
         return NodeStatus.SUCCESS
 
+
 class Selector(Node):
     def __init__(self, name, children=None):
         super().__init__(name)
@@ -46,29 +47,20 @@ class Selector(Node):
     def tick(self, blackboard):
         for child in self.children:
             status = child.tick(blackboard)
-            if status == NodeStatus.SUCCESS:
-                return NodeStatus.SUCCESS
+            if status != NodeStatus.FAILURE:
+                return status
         return NodeStatus.FAILURE
 
+
 class Parallel(Node):
-    """Run children sequentially, requiring a minimum number of successes.
-
-    Note: Children are executed SEQUENTIALLY in the current implementation,
-    not concurrently. The name reflects *semantic* parallelism — independent
-    checks that don't depend on each other's results.
-
-    ``min_success`` is the count of successful children required for the
-    overall node to return SUCCESS. If fewer children succeed, returns FAILURE.
-    """
-
     def __init__(self, name, children=None, min_success=1):
         super().__init__(name)
         self.children = children or []
         self.min_success = min_success
     def tick(self, blackboard):
-        success_count = 0
+        successes = 0
         for child in self.children:
-            status = child.tick(blackboard)
-            if status == NodeStatus.SUCCESS:
-                success_count += 1
-        return NodeStatus.SUCCESS if success_count >= self.min_success else NodeStatus.FAILURE
+            if child.tick(blackboard) == NodeStatus.SUCCESS:
+                successes += 1
+        return NodeStatus.SUCCESS if successes >= self.min_success else NodeStatus.FAILURE
+

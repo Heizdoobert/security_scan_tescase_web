@@ -24,9 +24,20 @@ Thumbs.db
 # Reports outputs
 reports/**/*.docx
 !reports/**/*.md
+reports/*.json
 
 # Environment
 .env
 
 # Debug / temp scripts
-_*.py
+_[a-z]*.py
+
+# Non-code artifacts and agent directories
+*.docx
+*.xlsx
+graphify-out/
+thoughts/
+.opencode/
+.superpowers/
+references/
+docs/

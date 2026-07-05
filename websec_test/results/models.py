@@ -8,6 +8,7 @@ class TestStatus(Enum):
     FAIL = "fail"
     WARN = "warn"
     ERROR = "error"
+    INFO = "info"
 
 
 class Severity(Enum):
@@ -27,3 +28,5 @@ class TestResult:
     endpoint: str = ""
     evidence: str = ""
     recommendation: str = ""
+    cvss_score: float | None = None
+    cvss_vector: str | None = None

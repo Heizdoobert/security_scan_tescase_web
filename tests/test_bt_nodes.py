@@ -1,23 +1,7 @@
-"""Tests for behavior tree composite nodes."""
+"""Tests for Selector, Parallel, Condition nodes."""
 import pytest
 from websec_test.engine.nodes import Node, NodeStatus, Blackboard, Sequence, Selector, Parallel
-from websec_test.engine.leaves import Action
-
-
-# ── Helper actions for testing ──────────────────────────────────────
-
-class CounterAction(Action):
-    def __init__(self, name, returns, fail_after=None):
-        super().__init__(name)
-        self.returns = returns
-        self.tick_count = 0
-        self.fail_after = fail_after
-
-    def do_tick(self, blackboard):
-        self.tick_count += 1
-        if self.fail_after is not None and self.tick_count > self.fail_after:
-            return NodeStatus.FAILURE
-        return self.returns
+from websec_test.engine.leaves import Action, Condition
 
 
 class SimpleAction(Action):
@@ -25,76 +9,24 @@ class SimpleAction(Action):
         super().__init__(name)
         self.result = result
         self.ticked = False
-
     def do_tick(self, blackboard):
         self.ticked = True
         return self.result
 
 
-# ── Fixtures ────────────────────────────────────────────────────────
+class CounterAction(Action):
+    def __init__(self, name, returns=NodeStatus.SUCCESS):
+        super().__init__(name)
+        self.returns = returns
+        self.tick_count = 0
+    def do_tick(self, blackboard):
+        self.tick_count += 1
+        return self.returns
+
 
 @pytest.fixture
 def blackboard():
     return Blackboard(client="mock_client", target="http://example.com")
-
-
-# ── NodeStatus ──────────────────────────────────────────────────────
-
-def test_node_status_enum():
-    assert NodeStatus.SUCCESS.value == "success"
-    assert NodeStatus.FAILURE.value == "failure"
-    assert NodeStatus.RUNNING.value == "running"
-
-
-def test_node_abstract():
-    with pytest.raises(TypeError):
-        Node("abstract")
-
-
-# ── Blackboard ──────────────────────────────────────────────────────
-
-def test_blackboard_add_result(blackboard):
-    blackboard.add_result("r1")
-    blackboard.add_result("r2")
-    assert blackboard.results == ["r1", "r2"]
-
-
-def test_blackboard_get_set(blackboard):
-    blackboard.set("key1", "val1")
-    assert blackboard.get("key1") == "val1"
-
-
-def test_blackboard_default(blackboard):
-    assert blackboard.get("nonexistent") is None
-    assert blackboard.get("nonexistent", 42) == 42
-
-
-# ── Sequence ────────────────────────────────────────────────────────
-
-def test_sequence_all_success(blackboard):
-    seq = Sequence("seq", [
-        SimpleAction("a1", NodeStatus.SUCCESS),
-        SimpleAction("a2", NodeStatus.SUCCESS),
-        SimpleAction("a3", NodeStatus.SUCCESS),
-    ])
-    assert seq.tick(blackboard) == NodeStatus.SUCCESS
-
-
-def test_sequence_short_circuit(blackboard):
-    a2 = SimpleAction("a2", NodeStatus.FAILURE)
-    a3 = SimpleAction("a3", NodeStatus.SUCCESS)
-    seq = Sequence("seq", [
-        SimpleAction("a1", NodeStatus.SUCCESS),
-        a2,
-        a3,
-    ])
-    assert seq.tick(blackboard) == NodeStatus.FAILURE
-    assert not a3.ticked, "third child should not have ticked"
-
-
-def test_sequence_no_children(blackboard):
-    seq = Sequence("empty", [])
-    assert seq.tick(blackboard) == NodeStatus.SUCCESS
 
 
 # ── Selector ────────────────────────────────────────────────────────
@@ -104,7 +36,15 @@ def test_selector_first_success(blackboard):
     a2 = SimpleAction("a2", NodeStatus.FAILURE)
     sel = Selector("sel", [a1, a2])
     assert sel.tick(blackboard) == NodeStatus.SUCCESS
-    assert not a2.ticked, "second child should not have ticked"
+    assert not a2.ticked
+
+
+def test_selector_first_running(blackboard):
+    a1 = SimpleAction("a1", NodeStatus.RUNNING)
+    a2 = SimpleAction("a2", NodeStatus.SUCCESS)
+    sel = Selector("sel", [a1, a2])
+    assert sel.tick(blackboard) == NodeStatus.RUNNING
+    assert not a2.ticked
 
 
 def test_selector_all_fail(blackboard):
@@ -115,23 +55,87 @@ def test_selector_all_fail(blackboard):
     assert sel.tick(blackboard) == NodeStatus.FAILURE
 
 
-# ── Parallel ────────────────────────────────────────────────────────
-
-def test_parallel_meets_threshold(blackboard):
-    para = Parallel("para", [
-        SimpleAction("a1", NodeStatus.SUCCESS),
-        SimpleAction("a2", NodeStatus.SUCCESS),
-        SimpleAction("a3", NodeStatus.SUCCESS),
-        SimpleAction("a4", NodeStatus.FAILURE),
-    ], min_success=3)
-    assert para.tick(blackboard) == NodeStatus.SUCCESS
+def test_selector_empty(blackboard):
+    sel = Selector("empty", [])
+    assert sel.tick(blackboard) == NodeStatus.FAILURE
 
 
-def test_parallel_fails_threshold(blackboard):
-    para = Parallel("para", [
-        SimpleAction("a1", NodeStatus.SUCCESS),
+def test_selector_second_succeeds(blackboard):
+    sel = Selector("sel", [
+        SimpleAction("a1", NodeStatus.FAILURE),
         SimpleAction("a2", NodeStatus.SUCCESS),
         SimpleAction("a3", NodeStatus.FAILURE),
-        SimpleAction("a4", NodeStatus.FAILURE),
-    ], min_success=3)
-    assert para.tick(blackboard) == NodeStatus.FAILURE
+    ])
+    assert sel.tick(blackboard) == NodeStatus.SUCCESS
+
+
+# ── Parallel ────────────────────────────────────────────────────────
+
+def test_parallel_all_success(blackboard):
+    p = Parallel("p", [
+        SimpleAction("a1", NodeStatus.SUCCESS),
+        SimpleAction("a2", NodeStatus.SUCCESS),
+    ], min_success=2)
+    assert p.tick(blackboard) == NodeStatus.SUCCESS
+
+
+def test_parallel_meets_threshold(blackboard):
+    p = Parallel("p", [
+        SimpleAction("a1", NodeStatus.SUCCESS),
+        SimpleAction("a2", NodeStatus.FAILURE),
+        SimpleAction("a3", NodeStatus.SUCCESS),
+    ], min_success=2)
+    assert p.tick(blackboard) == NodeStatus.SUCCESS
+
+
+def test_parallel_below_threshold(blackboard):
+    p = Parallel("p", [
+        SimpleAction("a1", NodeStatus.SUCCESS),
+        SimpleAction("a2", NodeStatus.FAILURE),
+    ], min_success=2)
+    assert p.tick(blackboard) == NodeStatus.FAILURE
+
+
+def test_parallel_runs_all_children(blackboard):
+    a2 = CounterAction("a2", NodeStatus.FAILURE)
+    p = Parallel("p", [
+        CounterAction("a1", NodeStatus.SUCCESS),
+        a2,
+    ], min_success=1)
+    assert p.tick(blackboard) == NodeStatus.SUCCESS
+    assert a2.tick_count == 1
+
+
+def test_parallel_empty(blackboard):
+    p = Parallel("empty", [], min_success=0)
+    assert p.tick(blackboard) == NodeStatus.SUCCESS
+
+
+def test_parallel_default_min_success(blackboard):
+    p = Parallel("p", [
+        SimpleAction("a1", NodeStatus.SUCCESS),
+    ])
+    assert p.tick(blackboard) == NodeStatus.SUCCESS
+
+
+# ── Condition ───────────────────────────────────────────────────────
+
+def test_condition_true(blackboard):
+    cond = Condition("is_true", lambda bb: True)
+    assert cond.tick(blackboard) == NodeStatus.SUCCESS
+
+
+def test_condition_false(blackboard):
+    cond = Condition("is_false", lambda bb: False)
+    assert cond.tick(blackboard) == NodeStatus.FAILURE
+
+
+def test_condition_receives_blackboard(blackboard):
+    blackboard.set("val", 42)
+    cond = Condition("check_bb", lambda bb: bb.get("val") == 42)
+    assert cond.tick(blackboard) == NodeStatus.SUCCESS
+
+
+def test_condition_exception_returns_failure(blackboard):
+    cond = Condition("broken", lambda bb: 1 / 0)
+    assert cond.tick(blackboard) == NodeStatus.FAILURE

@@ -1,10 +1,10 @@
 """Tests for auth module."""
 import responses
-from websec_test.modules.auth import AuthModule
+from websec_test.modules.authentication.auth import AuthModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 
-TARGET = "http://localhost:8080/Nhom_2s-0.0.1-SNAPSHOT"
+TARGET = "http://localhost:8080/Nhom_2s"
 
 LOGIN_PAGE = """<html><body>
     <form method="POST" action="/login">
@@ -31,7 +31,7 @@ def test_blank_password_login():
     for _ in range(14):
         responses.post(TARGET + "/login", status=200, body="Invalid")
     client = SessionClient(TARGET)
-    module = AuthModule(credentials="admin:admin")
+    module = AuthModule(credentials="admin:admin123")
     endpoints = module.discover(client, TARGET)
     results = module.test(client, TARGET, endpoints)
     login_tests = [r for r in results if r.test_name == "blank_password_login"]

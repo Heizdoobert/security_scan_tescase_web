@@ -16,7 +16,6 @@ def test_add_single_result():
     c.add(r)
     assert c.total == 1
     assert c.by_status[TestStatus.PASS] == 1
-    assert c.by_severity[Severity.LOW] == 1
 
 
 def test_add_multiple_results():
@@ -35,14 +34,13 @@ def test_add_multiple_results():
     assert c.by_status[TestStatus.ERROR] == 1
 
 
-def test_by_module_counts():
+def test_by_module_filters():
     c = ResultCollector()
     c.add(TestResult("headers", "hsts", TestStatus.PASS, Severity.LOW, "/"))
     c.add(TestResult("headers", "csp", TestStatus.FAIL, Severity.HIGH, "/"))
     c.add(TestResult("auth", "login", TestStatus.FAIL, Severity.CRITICAL, "/login"))
-    counts = c.by_module("headers")
-    assert counts["pass"] == 1
-    assert counts["fail"] == 1
+    header_results = [r for r in c.results if r.module == "headers"]
+    assert len(header_results) == 2
 
 
 def test_dedup_same_finding():

@@ -43,6 +43,8 @@ include = ["websec_test*"]
 testpaths = ["tests"]
 minversion = "7.0"
 log_cli = true
+filterwarnings = ["ignore::pytest.PytestCollectionWarning", "ignore::pytest.PytestUnknownMarkWarning"]
+markers = ["integration: live tests against sandbox or external services"]
 
 [tool.coverage.run]
 source = ["websec_test"]

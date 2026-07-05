@@ -1,6 +1,6 @@
 """Tests for CORS security module."""
 import responses
-from websec_test.modules.cors import CorsModule
+from websec_test.modules.configuration.cors import CorsModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 

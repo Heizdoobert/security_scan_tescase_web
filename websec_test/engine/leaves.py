@@ -11,9 +11,10 @@ class Action(Node):
         except Exception:
             return NodeStatus.FAILURE
 
-class Condition(Node):
-    def __init__(self, name, predicate):
+
+class Condition(Action):
+    def __init__(self, name, fn):
         super().__init__(name)
-        self.predicate = predicate
-    def tick(self, blackboard):
-        return NodeStatus.SUCCESS if self.predicate(blackboard) else NodeStatus.FAILURE
+        self.fn = fn
+    def do_tick(self, blackboard):
+        return NodeStatus.SUCCESS if self.fn(blackboard) else NodeStatus.FAILURE

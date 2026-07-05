@@ -1,6 +1,6 @@
 """Tests for authorization module."""
 import responses
-from websec_test.modules.authz import AuthorizationModule
+from websec_test.modules.authentication.authz import AuthorizationModule
 from websec_test.client.session import SessionClient
 from websec_test.results.models import TestStatus
 from websec_test.config.payloads import COMMON_PATHS
