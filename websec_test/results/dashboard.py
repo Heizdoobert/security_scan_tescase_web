@@ -322,10 +322,20 @@ class Dashboard:
         html_path = base / f"dashboard_{ts}.html"
         css_path = base / f"dashboard_{ts}.css"
         js_path = base / f"dashboard_{ts}.js"
+        
+        css_name = f"dashboard_{ts}.css"
+        js_name = f"dashboard_{ts}.js"
 
-        css_path.write_text(CSSBuilder().build(), encoding="utf-8")
-        js_path.write_text(JSBuilder().build(), encoding="utf-8")
-        html_path.write_text(HTMLBuilder().build(report, f"dashboard_{ts}.css", f"dashboard_{ts}.js", live), encoding="utf-8")
+        # Use Builders
+        css_builder = CSSBuilder()
+        js_builder = JSBuilder()
+        html_builder = HTMLBuilder()
+
+        css_path.write_text(css_builder.build(), encoding="utf-8")
+        js_path.write_text(js_builder.build(), encoding="utf-8")
+        
+        html_content = html_builder.build(report, css_name, js_name, live)
+        html_path.write_text(html_content, encoding="utf-8")
 
         if open_browser:
             import webbrowser
