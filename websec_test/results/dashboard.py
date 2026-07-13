@@ -1,6 +1,7 @@
 """Dashboard — exports HTML + CSS + JS report for test results."""
 from datetime import datetime
 from pathlib import Path
+import webbrowser
 
 
 class CSSBuilder:
@@ -310,15 +311,20 @@ class Dashboard:
 
     def __init__(self, reporter):
         self.reporter = reporter
-        self.collector = reporter.collector
 
     def render(self, output_dir: str = "./reports", open_browser: bool = False, live: bool = False) -> str:
         """Generate HTML dashboard and return the path to the HTML file."""
-        ts = self.reporter._start_time.strftime("%Y%m%d_%H%M%S")
+        report = self.reporter._build_report()
+        
+        try:
+            dt = datetime.fromisoformat(report["start_time"])
+            ts = dt.strftime("%Y%m%d_%H%M%S")
+        except (KeyError, ValueError, TypeError):
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
         base = Path(output_dir)
         base.mkdir(parents=True, exist_ok=True)
 
-        report = self.reporter._build_report()
         html_path = base / f"dashboard_{ts}.html"
         css_path = base / f"dashboard_{ts}.css"
         js_path = base / f"dashboard_{ts}.js"
@@ -338,8 +344,7 @@ class Dashboard:
         html_path.write_text(html_content, encoding="utf-8")
 
         if open_browser:
-            import webbrowser
-            webbrowser.open(f"file://{html_path.resolve()}")
+            webbrowser.open(html_path.resolve().as_uri())
 
         return str(html_path)
 
