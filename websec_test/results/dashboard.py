@@ -1,7 +1,6 @@
 """Dashboard — exports HTML + CSS + JS report for test results."""
 from datetime import datetime
 from pathlib import Path
-from websec_test.results.models import TestStatus
 
 
 class CSSBuilder:
@@ -296,8 +295,8 @@ class HTMLBuilder:
         {meaning_html}
         <tr><td class="dl">Expected:</td><td class="dv">{exp}</td></tr>
         <tr><td class="dl">Actual:</td><td class="dv">{act}</td></tr>
-        {('<tr><td class="dl">Recommendation:</td><td class="dv">' + rec + '</td></tr>') if rec else ''}
-        {('<tr><td class="dl">Endpoint:</td><td class="dv">' + ep + '</td></tr>') if ep else ''}
+        {f'<tr><td class="dl">Recommendation:</td><td class="dv">{rec}</td></tr>' if rec else ''}
+        {f'<tr><td class="dl">Endpoint:</td><td class="dv">{ep}</td></tr>' if ep else ''}
       </table>
       {log_section}
       {http_section}
