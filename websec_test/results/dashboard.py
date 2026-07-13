@@ -147,35 +147,8 @@ def _h(val):
     return str(val).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
-class Dashboard:
-    """Generates a standalone dashboard (3 files: HTML, CSS, JS) from a Reporter."""
-
-    def __init__(self, reporter):
-        self.reporter = reporter
-        self.collector = reporter.collector
-
-    def render(self, output_dir: str = "./reports", open_browser: bool = False, live: bool = False) -> str:
-        """Generate HTML dashboard and return the path to the HTML file."""
-        ts = self.reporter._start_time.strftime("%Y%m%d_%H%M%S")
-        base = Path(output_dir)
-        base.mkdir(parents=True, exist_ok=True)
-
-        report = self.reporter._build_report()
-        html_path = base / f"dashboard_{ts}.html"
-        css_path = base / f"dashboard_{ts}.css"
-        js_path = base / f"dashboard_{ts}.js"
-
-        css_path.write_text(CSSBuilder().build(), encoding="utf-8")
-        js_path.write_text(JSBuilder().build(), encoding="utf-8")
-        html_path.write_text(self._html(report, f"dashboard_{ts}.css", f"dashboard_{ts}.js", live), encoding="utf-8")
-
-        if open_browser:
-            import webbrowser
-            webbrowser.open(f"file://{html_path.resolve()}")
-
-        return str(html_path)
-
-    def _html(self, report: dict, css_file: str, js_file: str, live: bool = False) -> str:
+class HTMLBuilder:
+    def build(self, report: dict, css_file: str, js_file: str, live: bool = False) -> str:
         summary = report["summary"]
         results = report["results"]
         pass_pct = round(summary["pass"] / summary["total"] * 100, 1) if summary["total"] else 0
@@ -185,8 +158,8 @@ class Dashboard:
 
         table_body_html = ""
         for i, r in enumerate(results):
-            table_body_html += self._row(i, r)
-            table_body_html += self._detail(i, r)
+            table_body_html += self._build_row(i, r)
+            table_body_html += self._build_detail(i, r)
 
         modules = sorted({r["module"] for r in results})
         mod_opts = "".join(f'<option value="{_h(m)}">{_h(m)}</option>' for m in modules)
@@ -272,7 +245,7 @@ class Dashboard:
 </body>
 </html>"""
 
-    def _row(self, idx, r):
+    def _build_row(self, idx, r):
         sev = r["severity"].upper()
         cls = r["status"]
         test_id = f"test_{idx}"
@@ -285,7 +258,7 @@ class Dashboard:
   <td class="col-severity"><span class="sev-{sev.lower()}">{sev}</span></td>
 </tr>'''
 
-    def _detail(self, idx, r):
+    def _build_detail(self, idx, r):
         test_id = f"test_{idx}"
         cls = r["status"]
         expanded = "detail-row expanded" if cls == "fail" else "detail-row"
@@ -331,4 +304,34 @@ class Dashboard:
     </div>
   </td>
 </tr>'''
+
+
+class Dashboard:
+    """Generates a standalone dashboard (3 files: HTML, CSS, JS) from a Reporter."""
+
+    def __init__(self, reporter):
+        self.reporter = reporter
+        self.collector = reporter.collector
+
+    def render(self, output_dir: str = "./reports", open_browser: bool = False, live: bool = False) -> str:
+        """Generate HTML dashboard and return the path to the HTML file."""
+        ts = self.reporter._start_time.strftime("%Y%m%d_%H%M%S")
+        base = Path(output_dir)
+        base.mkdir(parents=True, exist_ok=True)
+
+        report = self.reporter._build_report()
+        html_path = base / f"dashboard_{ts}.html"
+        css_path = base / f"dashboard_{ts}.css"
+        js_path = base / f"dashboard_{ts}.js"
+
+        css_path.write_text(CSSBuilder().build(), encoding="utf-8")
+        js_path.write_text(JSBuilder().build(), encoding="utf-8")
+        html_path.write_text(HTMLBuilder().build(report, f"dashboard_{ts}.css", f"dashboard_{ts}.js", live), encoding="utf-8")
+
+        if open_browser:
+            import webbrowser
+            webbrowser.open(f"file://{html_path.resolve()}")
+
+        return str(html_path)
+
 
