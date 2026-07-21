@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="Electron" modified="2026-07-14T10:00:00.000Z" agent="Mozilla/5.0" version="24.2.5">
+  <diagram id="arch" name="Framework Architecture">
+    <mxGraphModel dx="0" dy="0" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="t" value="&lt;b&gt;WebSec Test + PentestGPT — Kiến trúc Framework&lt;/b&gt;" style="text;html=1;fontSize=18;align=center;verticalAlign=middle;fontStyle=1;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="250" y="10" width="600" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- L1: CLI / Entry Point -->
+        <mxCell id="l1-box" value="" style="rounded=0;whiteSpace=window;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="30" y="60" width="1040" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="l1-lbl" value="&lt;b&gt;L1 — CLI &amp;amp; Điểm vào&lt;/b&gt;" style="text;html=1;fontSize=13;fillColor=none;strokeColor=none;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="65" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="main" value="&lt;b&gt;main.py&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Phân tích CLI&lt;br&gt;--target, --modules, --output&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#000000;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="90" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="pentestgpt" value="&lt;b&gt;PentestGPT CLI&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;interface/main.py&lt;br&gt;--target, --instruction&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="420" y="90" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="reporter" value="&lt;b&gt;Báo cáo&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;to_json() / to_terminal()&lt;br&gt;to_dashboard()&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="760" y="90" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rpt-out" value="&lt;font style=&quot;font-size: 9px;&quot;&gt;JSON / HTML / Terminal&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=9;fillColor=none;strokeColor=none;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="760" y="160" width="140" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="a-main-rpt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#b85450;" edge="1" parent="1" source="main" target="reporter">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- L2: Engine -->
+        <mxCell id="l2-box" value="" style="rounded=0;whiteSpace=window;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="30" y="200" width="1040" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="l2-lbl" value="&lt;b&gt;L2 — Engine (Behavior Tree + Pipeline)&lt;/b&gt;" style="text;html=1;fontSize=13;fillColor=none;strokeColor=none;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="205" width="300" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="bt-nodes" value="&lt;b&gt;BT Nodes&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Sequence / Selector /&lt;br&gt;Parallel / Condition&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="80" y="230" width="130" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="bt-leaves" value="&lt;b&gt;Leaves &amp;amp; Decorators&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Action / Condition&lt;br&gt;Retry / Timeout / Invert&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="80" y="300" width="130" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="bt-adapter" value="&lt;b&gt;Bộ điều hợp&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;ModuleAdapter&lt;br&gt;CheckAdapter&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="290" y="230" width="130" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="bt-builder" value="&lt;b&gt;Trình xây dựng&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;CheckTreeBuilder&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="290" y="300" width="130" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="pipeline" value="&lt;b&gt;PipelineOrchestrator&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;run() → Vòng lặp Stage&lt;br&gt;pause / resume / stop&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="580" y="230" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="controller" value="&lt;b&gt;AgentController&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;IDLE→RUNNING→PAUSED&lt;br&gt;Phát hiện Flag&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="580" y="300" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="backend" value="&lt;b&gt;ClaudeCodeBackend&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Subprocess → claude CLI&lt;br&gt;Giao thức JSON Lines&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="800" y="230" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sessionstore" value="&lt;b&gt;SessionStore&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;~/.pentestgpt/sessions/&lt;br&gt;Lưu trữ JSON&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="800" y="300" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="eventbus" value="&lt;b&gt;EventBus&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Singleton Pub/Sub&lt;br&gt;STATE / MESSAGE / TOOL / FLAG&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="580" y="300" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="a-l1-l2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;strokeColor=#b85450;" edge="1" parent="1" source="main" target="bt-nodes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a-l1-l2-p" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.6;exitY=1;exitDx=0;exitDy=0;entryX=0.3;entryY=0;entryDx=0;entryDy=0;strokeColor=#d79b00;" edge="1" parent="1" source="pentestgpt" target="pipeline">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- L3: Test Modules -->
+        <mxCell id="l3-box" value="" style="rounded=0;whiteSpace=window;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="30" y="420" width="1040" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="l3-lbl" value="&lt;b&gt;L3 — Mô-đun Kiểm thử (websec_test/modules/)&lt;/b&gt;" style="text;html=1;fontSize=13;fillColor=none;strokeColor=none;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="425" width="300" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="m-sqli" value="&lt;b&gt;SQL Injection&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="455" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-xss" value="&lt;b&gt;XSS&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="190" y="455" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-cmdi" value="&lt;b&gt;CMD Injection&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="320" y="455" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-nosql" value="&lt;b&gt;NoSQL Injection&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="450" y="455" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-auth" value="&lt;b&gt;Xác thực&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="580" y="455" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-authz" value="&lt;b&gt;Phân quyền&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="710" y="455" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-csrf" value="&lt;b&gt;CSRF&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="840" y="455" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-cors" value="&lt;b&gt;CORS&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="505" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-headers" value="&lt;b&gt;Header Bảo mật&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="190" y="505" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-cookies" value="&lt;b&gt;Cookies&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="320" y="505" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-ssl" value="&lt;b&gt;SSL / TLS&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="450" y="505" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-disc" value="&lt;b&gt;Lộ thông tin&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="580" y="505" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-methods" value="&lt;b&gt;Phương thức HTTP&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="710" y="505" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="m-ai" value="&lt;b&gt;AI Analysis&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 9px;&quot;&gt;Ollama LLM&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="840" y="505" width="110" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="a-l2-l3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.1;exitY=1;exitDx=0;exitDy=0;entryX=0.1;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673a6;" edge="1" parent="1" source="l2-box" target="l3-box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- L4: Security Scanners -->
+        <mxCell id="l4-box" value="" style="rounded=0;whiteSpace=window;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="30" y="610" width="1040" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="l4-lbl" value="&lt;b&gt;L4 — Trình quét Bảo mật (websec_test/security/)&lt;/b&gt;" style="text;html=1;fontSize=13;fillColor=none;strokeColor=none;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="615" width="400" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="s-sast" value="&lt;b&gt;SAST Scanner&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Quét mã nguồn bằng regex&lt;br&gt;Secret / SQLi / XSS&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="60" y="645" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="s-threat" value="&lt;b&gt;Threat Modeler&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;STRIDE + DREAD&lt;br&gt;Phân tích DFD&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="270" y="645" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="s-dep" value="&lt;b&gt;Kiểm tra Phụ thuộc&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Tra cứu lỗ hổng&lt;br&gt;Tuân thủ giấy phép&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="480" y="645" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="s-comp" value="&lt;b&gt;Kiểm tra Tuân thủ&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;OWASP / PCI-DSS /&lt;br&gt;GDPR&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="690" y="645" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="s-crawl" value="&lt;b&gt;Trình thu thập&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Khám phá endpoint&lt;br&gt;Trích xuất form&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="880" y="645" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="a-l3-l4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#d6b656;" edge="1" parent="1" source="l3-box" target="l4-box">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- L5: Infrastructure / Support -->
+        <mxCell id="l5-box" value="" style="rounded=0;whiteSpace=window;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="780" width="1040" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="l5-lbl" value="&lt;b&gt;L5 — Hạ tầng &amp;amp; Hỗ trợ&lt;/b&gt;" style="text;html=1;fontSize=13;fillColor=none;strokeColor=none;fontStyle=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="785" width="300" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-http" value="&lt;b&gt;SessionClient&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;HTTP + CSRF&lt;br&gt;Quản lý Cookie&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="60" y="810" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-ollama" value="&lt;b&gt;OllamaClient&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;LLM nội bộ (qwen2.5-coder)&lt;br&gt;HTTP API wrapper&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="240" y="810" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-config" value="&lt;b&gt;PentestGPTConfig&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Cấu hình Pydantic&lt;br&gt;Hỗ trợ .env&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="420" y="810" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-collect" value="&lt;b&gt;ResultCollector&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Tích lũy / Khử trùng&lt;br&gt;Thống kê theo trạng thái&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="600" y="810" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="inf-loader" value="&lt;b&gt;Plugin Loader&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Tự động phát hiện mô-đun&lt;br&gt;walk_packages&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="780" y="810" width="140" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;fontColor=#333;" vertex="1" parent="1">
+          <mxGeometry x="60" y="930" width="400" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-title" value="&lt;b&gt;Chú thích&lt;/b&gt;" style="text;html=1;fontSize=11;align=left;fillColor=none;strokeColor=none;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="935" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-ws" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="70" y="960" width="16" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-ws-l" value="WebSec Test" style="text;html=1;fontSize=10;align=left;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="92" y="960" width="80" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-pg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="200" y="960" width="16" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-pg-l" value="PentestGPT" style="text;html=1;fontSize=10;align=left;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="222" y="960" width="80" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-sup" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="330" y="960" width="16" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-sup-l" value="Dùng chung" style="text;html=1;fontSize=10;align=left;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="352" y="960" width="100" height="16" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

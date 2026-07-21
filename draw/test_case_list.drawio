@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="Electron" modified="2026-07-14T10:00:00.000Z" agent="Mozilla/5.0" version="24.2.5">
+  <diagram id="tclist" name="Test Case List">
+    <mxGraphModel dx="0" dy="0" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="t" value="&lt;b&gt;Các Test Case Tự động — WebSec Test Framework&lt;/b&gt;" style="text;html=1;fontSize=18;align=center;verticalAlign=middle;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="250" y="10" width="700" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════ -->
+        <!-- TABLE: Security Modules (14 modules)          -->
+        <!-- ══════════════════════════════════════════════ -->
+        <mxCell id="h-cat" value="&lt;b&gt;Danh mục Mô-đun&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="h-mod" value="&lt;b&gt;Mô-đun / Tên Kiểm thử&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="180" y="60" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="h-desc" value="&lt;b&gt;Mô tả&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="380" y="60" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="h-sev" value="&lt;b&gt;Mức độ&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="760" y="60" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="h-stat" value="&lt;b&gt;Trạng thái&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#000000;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="840" y="60" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 1: SQL Injection ── -->
+        <mxCell id="r1-c" value="SQL Injection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="90" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r1-m" value="sqli / check_sqli" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="90" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r1-d" value="Phát hiện SQLi qua payload error-based, UNION, time-based, Boolean-blind" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="90" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r1-s" value="CRITICAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="90" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r1-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="90" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 2: XSS ── -->
+        <mxCell id="r2-c" value="Cross-Site Scripting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r2-m" value="xss / check_xss" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="120" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r2-d" value="XSS Phản chiếu &amp; Lưu trữ qua payload script/event-handler trong params &amp; forms" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="120" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r2-s" value="CRITICAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="120" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r2-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="120" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 3: CMD Injection ── -->
+        <mxCell id="r3-c" value="CMD Injection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="150" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r3-m" value="cmd_injection / check_cmd_inject" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="150" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r3-d" value="Chèn lệnh OS qua sleep, cat, pipe, subprocess trong trường nhập liệu" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="150" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r3-s" value="CRITICAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="150" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r3-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="150" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 4: NoSQL Injection ── -->
+        <mxCell id="r4-c" value="NoSQL Injection" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="180" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r4-m" value="nosql / check_nosql" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="180" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r4-d" value="Chèn NoSQL qua toán tử $ne, $gt, $regex trong JSON/query params" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="180" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r4-s" value="HIGH" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="180" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r4-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="180" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 5: Xác thực ── -->
+        <mxCell id="r5-c" value="Xác thực" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="210" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r5-m" value="auth / check_sqli_bypass, check_blank_password, check_rate_limit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="210" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r5-d" value="Vượt qua đăng nhập bằng SQLi, mật khẩu trống, giới hạn tốc độ trên endpoint auth" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="210" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r5-s" value="HIGH" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="210" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r5-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="210" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 6: Phân quyền ── -->
+        <mxCell id="r6-c" value="Phân quyền" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="240" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r6-m" value="authz / check_idor, check_forced_browsing, check_admin_access" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="240" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r6-d" value="IDOR, forced browsing, hạn chế admin/role, leo thang đặc quyền dọc" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="240" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r6-s" value="HIGH" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="240" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r6-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="240" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 7: CSRF ── -->
+        <mxCell id="r7-c" value="CSRF" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="270" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r7-m" value="csrf / check_csrf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="270" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r7-d" value="Kiểm tra token CSRF, xác thực và chống CSRF trên endpoint thay đổi trạng thái" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="270" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r7-s" value="HIGH" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="270" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r7-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="270" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 8: CORS ── -->
+        <mxCell id="r8-c" value="CORS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r8-m" value="cors / check_wildcard, check_credentials, check_reflected" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="300" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r8-d" value="Origin wildcard, kết hợp credentials+wildcard, header Origin phản chiếu" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="300" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r8-s" value="MEDIUM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="300" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r8-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="300" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 9: Header Bảo mật ── -->
+        <mxCell id="r9-c" value="Header Bảo mật" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="330" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r9-m" value="headers / check_sts, check_csp, check_xfo, check_hpkp" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="330" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r9-d" value="Header HSTS, CSP, X-Frame-Options, X-Content-Type-Options, HPKP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="330" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r9-s" value="MEDIUM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="330" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r9-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="330" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 10: Cookies ── -->
+        <mxCell id="r10-c" value="Cookies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="360" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r10-m" value="cookies / check_secure, check_httponly, check_samesite" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="360" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r10-d" value="Cờ Secure, cờ HttpOnly, thuộc tính SameSite trên cookie session" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="360" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r10-s" value="MEDIUM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="360" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r10-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="360" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 11: SSL/TLS ── -->
+        <mxCell id="r11-c" value="SSL/TLS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="390" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r11-m" value="ssl_tls / check_certificate, check_tls_1_0, check_hsts_preload" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="390" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r11-d" value="Hiệu lực chứng chỉ, TLS 1.0/1.1 được bật, sẵn sàng HSTS preload" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="390" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r11-s" value="MEDIUM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="390" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r11-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="390" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 12: Lộ thông tin ── -->
+        <mxCell id="r12-c" value="Lộ thông tin" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="420" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r12-m" value="disclosure / check_server, check_trace, check_directory_listing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="420" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r12-d" value="Banner phiên bản server, X-Powered-By, liệt kê thư mục, stack traces" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="420" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r12-s" value="MEDIUM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="420" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r12-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="420" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 13: Phương thức HTTP ── -->
+        <mxCell id="r13-c" value="Phương thức HTTP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="450" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r13-m" value="methods / check_options, check_trace, check_put, check_delete, check_verb_tamper" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="450" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r13-d" value="Động từ OPTIONS, TRACE, PUT, DELETE; giả mạo động từ HTTP qua header tùy chỉnh" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="450" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r13-s" value="MEDIUM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="450" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r13-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="450" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ── Row 14: AI Analysis ── -->
+        <mxCell id="r14-c" value="AI Analysis" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="480" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r14-m" value="ai_analysis / check_ollama_status, check_ai_endpoint_analysis" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="480" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r14-d" value="Kết nối Ollama, phân tích endpoint bằng LLM, giả thuyết lỗ hổng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="480" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r14-s" value="MEDIUM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="480" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="r14-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="480" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════ -->
+        <!-- SECOND TABLE: Security Scanners (4)           -->
+        <!-- ══════════════════════════════════════════════ -->
+        <mxCell id="s-hdr" value="&lt;b&gt;Kiểm thử Trình quét Bảo mật&lt;/b&gt;" style="text;html=1;fontSize=14;align=left;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="530" width="300" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sh-c" value="&lt;b&gt;Danh mục&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;align=center;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="560" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sh-n" value="&lt;b&gt;Trình quét&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;align=center;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="560" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sh-d" value="&lt;b&gt;Khả năng&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;align=center;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="560" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sh-s" value="&lt;b&gt;Mức độ&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;align=center;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="560" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="sh-st" value="&lt;b&gt;Trạng thái&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;align=center;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="560" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Row S1: SAST -->
+        <mxCell id="s1-c" value="SAST" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="590" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s1-n" value="SecurityScanner" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="590" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s1-d" value="Dựa trên regex: secret cứng, SQLi, XSS, CMDi, path traversal, crypto yếu, deserialize không an toàn" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="590" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s1-s" value="CRITICAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="590" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s1-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="590" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Row S2: Threat Modeler -->
+        <mxCell id="s2-c" value="Mô hình Mối đe dọa" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="620" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s2-n" value="ThreatModeler" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="620" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s2-d" value="Phân loại STRIDE, đánh giá DREAD, phân tích phần tử DFD, cổng thoát theo mức độ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="620" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s2-s" value="HIGH" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="620" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s2-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="620" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Row S3: DepCheck -->
+        <mxCell id="s3-c" value="Phụ thuộc" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="650" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s3-n" value="DependencyAssessor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="650" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s3-d" value="Tra cứu lỗ hổng, tuân thủ giấy phép, phát hiện gói lỗi thời, rủi ro chuỗi cung ứng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="650" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s3-s" value="HIGH" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="650" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s3-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="650" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- Row S4: Compliance -->
+        <mxCell id="s4-c" value="Tuân thủ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="680" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s4-n" value="ComplianceChecker" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="680" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s4-d" value="Ánh xạ OWASP Top 10, kiểm soát PCI-DSS, xác minh yêu cầu GDPR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="680" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s4-s" value="MEDIUM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="680" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="s4-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="840" y="680" width="80" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════ -->
+        <!-- THIRD TABLE: PentestGPT Pipeline Tests         -->
+        <!-- ══════════════════════════════════════════════ -->
+        <mxCell id="p-hdr" value="&lt;b&gt;Kiểm thử Đường ống PentestGPT&lt;/b&gt;" style="text;html=1;fontSize=14;align=left;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="730" width="400" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ph-c" value="&lt;b&gt;Danh mục&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;align=center;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="760" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ph-n" value="&lt;b&gt;Thành phần&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;align=center;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="760" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ph-d" value="&lt;b&gt;Trọng tâm Kiểm thử&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;align=center;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="760" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ph-st" value="&lt;b&gt;Trạng thái&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;align=center;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="760" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- P1 -->
+        <mxCell id="p1-c" value="Pipeline" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="790" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-n" value="PipelineOrchestrator" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="790" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-d" value="Điều phối Stage, tạm dừng/tiếp tục/dừng, chèn context, phục hồi lỗi" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="790" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="790" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- P2 -->
+        <mxCell id="p2-c" value="Controller" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="820" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-n" value="AgentController" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="820" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-d" value="Vòng đời 5 trạng thái, phát hiện flag bằng regex, lưu trữ session, chèn instruction" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="820" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p2-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="820" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- P3 -->
+        <mxCell id="p3-c" value="Session" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="850" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-n" value="SessionStore / SessionInfo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="850" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-d" value="Lưu trữ JSON, tải/lưu/xóa session, lọc theo mục tiêu, theo dõi chi phí" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="850" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p3-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="850" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- P4 -->
+        <mxCell id="p4-c" value="Sự kiện" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="880" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-n" value="EventBus / Event" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="880" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-d" value="Singleton pub/sub, 6 loại sự kiện, an toàn luồng, cách ly handler" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="880" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p4-st" value="✅ Tự động" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="880" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- P5 -->
+        <mxCell id="p5-c" value="Backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="910" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p5-n" value="ClaudeCodeBackend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="180" y="910" width="200" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p5-d" value="Quản lý tiến trình con, phân tích JSON lines, tiếp tục session, cách ly môi trường" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="380" y="910" width="380" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p5-st" value="⏳ Đang tiến hành" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="910" width="160" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ══════════════════════════════════════════════ -->
+        <!-- Summary row                                    -->
+        <!-- ══════════════════════════════════════════════ -->
+        <mxCell id="summary" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="960" width="880" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="s-text" value="&lt;b&gt;Tổng kết:&lt;/b&gt; 14 Mô-đun Bảo mật + 4 Trình quét Bảo mật + 5 Thành phần PentestGPT = &lt;b&gt;23 bộ kiểm thử tự động&lt;/b&gt; bao phủ 50+ kiểm tra riêng lẻ" style="text;html=1;fontSize=12;align=center;verticalAlign=middle;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="50" y="962" width="860" height="46" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

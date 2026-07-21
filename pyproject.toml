@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=64"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "websec-test"
@@ -43,6 +43,7 @@ include = ["websec_test*"]
 testpaths = ["tests"]
 minversion = "7.0"
 log_cli = true
+log_cli_level = "INFO"
 filterwarnings = ["ignore::pytest.PytestCollectionWarning", "ignore::pytest.PytestUnknownMarkWarning"]
 markers = ["integration: live tests against sandbox or external services"]
 
